@@ -1,6 +1,8 @@
 package it.univaq.lanotte;
 
+import it.univaq.lanotte.model.Product;
 import it.univaq.lanotte.model.User;
+import it.univaq.lanotte.repository.ProductRepository;
 import it.univaq.lanotte.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -20,6 +22,9 @@ public class LanotteApplication {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    ProductRepository productRepository;
+
     public static void main(String[] args) {
         SpringApplication.run(LanotteApplication.class, args);
     }
@@ -28,5 +33,11 @@ public class LanotteApplication {
     public String sayHello() {
         User user = userRepository.findByEmail("claudiarecchia97@gmail.com");
         return user.toString();
+    }
+
+    @GetMapping("/drink")
+    public String drink() {
+        Product p = productRepository.findByName("moscow mule");
+        return p.toString();
     }
 }
