@@ -21,7 +21,7 @@ public class Business {
     @Field("business_name")
     private String businessName;
     @Field("VAT_number")
-    private int VATNumber;
+    private String VATNumber;
     private String description;
     private byte[] image;
     private String location;

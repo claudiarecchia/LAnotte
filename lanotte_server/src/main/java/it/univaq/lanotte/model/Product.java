@@ -4,10 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.bson.types.ObjectId;
+import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.util.ArrayList;
+import java.util.Base64;
 
 @Getter
 @Setter
@@ -22,4 +23,19 @@ public class Product {
     private byte[] image;
     private String category;
     private ArrayList<String> stamps;
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id", id);
+        json.put("name", name);
+        json.put("ingredients", ingredients);
+        json.put("category", category);
+        json.put("stamps", stamps);
+
+        if(image != null) {
+            json.put("image", Base64.getEncoder().encodeToString(image));
+        }
+        return json;
+    }
+
 }
