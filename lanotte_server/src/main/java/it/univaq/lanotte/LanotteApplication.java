@@ -6,6 +6,7 @@ import it.univaq.lanotte.model.User;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.ProductRepository;
 import it.univaq.lanotte.repository.UserRepository;
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
@@ -44,10 +47,14 @@ public class LanotteApplication {
     @GetMapping("/drink")
     @ResponseBody
     public String drink() {
-        JSONObject obj = new JSONObject();
+        JSONArray j_arr = new JSONArray();
+        // JSONObject obj = new JSONObject();
         Product p = productRepository.findByName("moscow mule");
-        obj = p.toJSON();
-        return obj.toString();
+        // obj = p.toJSON();
+        j_arr.put(p.toJSON());
+        j_arr.put(p.toJSON());
+        j_arr.put(p.toJSON());
+        return j_arr.toString();
     }
 
     @GetMapping("/allBusiness")
@@ -55,5 +62,6 @@ public class LanotteApplication {
         List<Business> business_list = businessRepository.findAll();
         return business_list.toString();
     }
+
 
 }
