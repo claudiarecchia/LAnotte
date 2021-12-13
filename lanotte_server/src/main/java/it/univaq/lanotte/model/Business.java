@@ -24,14 +24,14 @@ public class Business {
     @Field("VAT_number")
     private String VATNumber;
     private String description;
-    private byte[] image;
+    //private byte[] image;
+    private String image;
     private String location;
     private Double rating;
     private ArrayList<Product> products;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        // List<JSONObject> prod_list = new ArrayList<>();
         JSONArray prod_list = new JSONArray();
         json.put("id", id);
         json.put("business_name", businessName);
@@ -42,9 +42,11 @@ public class Business {
         for (Product p : products)
             prod_list.put(p.toJSON());
         json.put("products", prod_list);
-        if(image != null) {
-            json.put("image", Base64.getEncoder().encodeToString(image));
-        }
+        json.put("image", image);
+
+//        if(image != null) {
+//            json.put("image", Base64.getEncoder().encodeToString(image));
+//        }
         return json;
     }
 
@@ -80,11 +82,11 @@ public class Business {
         this.description = description;
     }
 
-    public byte[] getImage() {
+    public String getImage() {
         return image;
     }
 
-    public void setImage(byte[] image) {
+    public void setImage(String image) {
         this.image = image;
     }
 

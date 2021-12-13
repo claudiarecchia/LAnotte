@@ -20,9 +20,11 @@ public class Product {
     private ObjectId id;
     private String name;
     private ArrayList<String> ingredients;
-    private byte[] image;
+    // private byte[] image;
+    private String image;
     private String category;
     private ArrayList<String> stamps;
+    private Double price;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -31,10 +33,12 @@ public class Product {
         json.put("ingredients", ingredients);
         json.put("category", category);
         json.put("stamps", stamps);
+        json.put("price", price);
+        json.put("image", image);
 
-        if(image != null) {
-            json.put("image", Base64.getEncoder().encodeToString(image));
-        }
+//        if(image != null) {
+//            json.put("image", Base64.getEncoder().encodeToString(image));
+//        }
         return json;
     }
 
