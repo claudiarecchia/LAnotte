@@ -81,7 +81,7 @@ public class MobileAPI {
 
         try{
             JSONObject body = new JSONObject(requestBody);
-            //System.out.println(body);
+            System.out.println(body);
 
             JSONObject business1 = body.getJSONObject("business");
             Business business = businessRepository.findByBusinessName(business1.getString("business_name"));
@@ -98,19 +98,31 @@ public class MobileAPI {
 
             // is there is no user listed, then the user is a guest
             // so, we save a new empty user in the db and we get back the generated User
-            if (body.has("user")){
-                System.out.println("utente presente");
-                JSONObject user1 = body.getJSONObject("user");
+//            if (body.has("user")){
+//                System.out.println("utente presente");
+//                JSONObject user1 = body.getJSONObject("user");
+//                Optional<User> user = userRepository.findById(user1.getString("id"));
+//                order.setUser(user.get());
+//                System.out.println(order.getUser().getId());
+//            }
+//
+
+            JSONObject user1 = body.getJSONObject("user");
+            if (!user1.toString().equals("{}")) {
                 Optional<User> user = userRepository.findById(user1.getString("id"));
+                // System.out.println(user);
+                System.out.println("utente presente");
                 order.setUser(user.get());
                 System.out.println(order.getUser().getId());
             }
             else {
+                System.out.println("utente NON presente");
                 User new_guest_user = userRepository.save(new User());
                 order.setUser(new_guest_user);
             }
 
             order.setDateTime(body.getString("date_time"));
+            System.out.println(order.getDateTime());
 
         } catch (JSONException e) { }
 
@@ -135,7 +147,7 @@ public class MobileAPI {
             Optional<User> user_opt = userRepository.findById(body.getString("id"));
             User user = user_opt.get();
 
-            List<Order> orders = orderRepository.findByUser(user);
+            List<Order> orders = orderRepository.findAllByUserOrderByIdDesc(user);
 
             for (Order o : orders)
                 j_arr.put(o.toJSON());
@@ -144,4 +156,26 @@ public class MobileAPI {
 
         return j_arr.toString();
     }
+
+
+    @PostMapping("/lastOrder")
+    @ResponseBody
+    public String lastProductOrderedToday(@RequestBody String requestBody) {
+        JSONArray j_arr = new JSONArray();
+
+        try {
+            JSONObject body = new JSONObject(requestBody);
+            System.out.println(body);
+            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+            User user = user_opt.get();
+
+            Order order = orderRepository.findFirstByUserOrderByIdDesc(user);
+            System.out.println(order);
+            j_arr.put(order.toJSON());
+        }
+        catch (JSONException e) { }
+
+        return j_arr.toString();
+    }
+
 }
