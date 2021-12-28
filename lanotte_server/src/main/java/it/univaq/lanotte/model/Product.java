@@ -16,6 +16,12 @@ import java.util.Base64;
 
 @Document(collection = "products")
 public class Product {
+
+
+    public String getId() {
+        return id.toString();
+    }
+
     @Id
     private ObjectId id;
     private String name;

@@ -1,5 +1,9 @@
 package it.univaq.lanotte.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.univaq.lanotte.model.Business;
 import it.univaq.lanotte.model.Order;
 import it.univaq.lanotte.model.Product;
@@ -11,13 +15,11 @@ import it.univaq.lanotte.repository.UserRepository;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("api")
@@ -108,7 +110,9 @@ public class MobileAPI {
 //
 
             JSONObject user1 = body.getJSONObject("user");
-            if (!user1.toString().equals("{}")) {
+            //if (!user1.toString().equals("{}")) {
+            if ((user1.has("id") && !user1.isNull("id"))){
+
                 Optional<User> user = userRepository.findById(user1.getString("id"));
                 // System.out.println(user);
                 System.out.println("utente presente");
@@ -142,7 +146,7 @@ public class MobileAPI {
 
         try {
             JSONObject body = new JSONObject(requestBody);
-            System.out.println(body);
+            System.out.println("BODY " + body);
 
             Optional<User> user_opt = userRepository.findById(body.getString("id"));
             User user = user_opt.get();
@@ -153,7 +157,7 @@ public class MobileAPI {
                 j_arr.put(o.toJSON());
         }
         catch (JSONException e) { }
-
+        System.out.println(j_arr);
         return j_arr.toString();
     }
 
@@ -178,4 +182,63 @@ public class MobileAPI {
         return j_arr.toString();
     }
 
+    @PostMapping("/getUser")
+    @ResponseBody
+    public String favouriteProducts(@RequestBody String requestBody) {
+        JSONArray j_arr = new JSONArray();
+
+        try {
+            JSONObject body = new JSONObject(requestBody);
+            System.out.println(body);
+            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+            User user = user_opt.get();
+
+            j_arr.put(user.toJSON());
+        }
+        catch (JSONException e) { }
+
+        return j_arr.toString();
+    }
+
+
+    @PostMapping("/saveFavourites")
+    @ResponseBody
+    public String saveFavouriteProducts(@RequestBody String requestBody) {
+        JSONArray j_arr = new JSONArray();
+
+        try {
+            JSONObject body = new JSONObject(requestBody);
+            // System.out.println("BODY: " + body);
+
+            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+            User user = user_opt.get();
+
+            // save user's orders
+            List<Order> user_orders = orderRepository.findByUser(user);
+
+            // modify fav products
+            JSONObject obj = body.getJSONObject("favourite_products");
+            Map<String, ArrayList<Product>> result = new ObjectMapper().readValue(obj.toString(), new TypeReference<Map<String, ArrayList<Product>>>(){});
+
+            // update favs
+            user.setFavouriteProducts(result);
+
+            userRepository.save(user);
+
+            // update all user's orders
+            for (Order o : user_orders){
+                o.setUser(user);
+                orderRepository.save(o);
+            }
+
+            j_arr.put(user.toJSON());
+        }
+        catch (JSONException e) { } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return j_arr.toString();
+    }
 }
