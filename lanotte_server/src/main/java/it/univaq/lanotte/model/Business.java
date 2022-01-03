@@ -10,10 +10,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 @Document(collection = "business")
 public class Business {
@@ -29,6 +26,8 @@ public class Business {
     private String location;
     private Double rating;
     private ArrayList<Product> products;
+    @Field("opening_houres")
+    private Map<String, ArrayList<String>> openingHoures;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -42,6 +41,7 @@ public class Business {
         for (Product p : products)
             prod_list.put(p.toJSON());
         json.put("products", prod_list);
+        json.put("opening_houres", openingHoures);
         json.put("image", image);
 
 //        if(image != null) {
