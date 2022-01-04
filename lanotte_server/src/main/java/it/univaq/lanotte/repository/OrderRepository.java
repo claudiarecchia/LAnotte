@@ -18,5 +18,4 @@ public interface OrderRepository extends MongoRepository<Order, String> {
     Order findFirstByUserOrderByIdDesc(User user);
     List<Order> findAllByUserOrderByIdDesc(User user);
 
-    // ArrayList<Order> findByUser();
 }

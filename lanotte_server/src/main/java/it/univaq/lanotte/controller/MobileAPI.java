@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import it.univaq.lanotte.model.Business;
 import it.univaq.lanotte.model.Order;
 import it.univaq.lanotte.model.Product;
@@ -15,7 +17,6 @@ import it.univaq.lanotte.repository.UserRepository;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -235,6 +236,41 @@ public class MobileAPI {
             // modify ratings
             JSONObject obj = body.getJSONObject("ratings");
             Map<String, Integer> result = new ObjectMapper().readValue(obj.toString(), new TypeReference<Map<String, Integer>>(){});
+
+            // get old ratings (to compare with new to update business attributes)
+            Map<String, Integer> old_ratings = user.getRatings();
+            MapDifference<String, Integer> diff = Maps.difference(old_ratings, result);
+            Set<String> keysOnlyInSource = diff.entriesOnlyOnLeft().keySet();
+            Set<String> keysOnlyInTarget = diff.entriesOnlyOnRight().keySet();
+            Map<String, MapDifference.ValueDifference<Integer>> entriesDiffering = diff.entriesDiffering();
+
+            System.out.println("ELEMENTI DIFFERENTI:");
+            System.out.println(keysOnlyInSource);
+            System.out.println(keysOnlyInTarget);
+            System.out.println(entriesDiffering);
+
+            // rating for new business -> add rating
+            if (keysOnlyInTarget.toString() != "[]") {
+                Business business = businessRepository.findByBusinessName(keysOnlyInTarget.iterator().next());
+                business.setNumberRatings(business.getNumberRatings() + 1);
+                System.out.println(result.get(keysOnlyInTarget.iterator().next()));
+                business.setRatingSum(business.getRatingSum() + result.get(keysOnlyInTarget.iterator().next()));
+                business.setRating((double) (business.getRatingSum() / business.getNumberRatings()));
+                businessRepository.save(business);
+            }
+
+            // changed rating for an already reviewed business -> change rating
+            if (entriesDiffering.toString() != "{}") {
+                Business business = businessRepository.findByBusinessName(entriesDiffering.keySet().iterator().next());
+
+                // compute the difference
+                MapDifference.ValueDifference<Integer> list_difference = entriesDiffering.values().iterator().next();
+                Integer difference = list_difference.rightValue() - list_difference.leftValue();
+                business.setRatingSum(business.getRatingSum() + difference);
+                business.setRating((double) (business.getRatingSum() / business.getNumberRatings()));
+                businessRepository.save(business);
+            }
+
 
             // update ratings
             user.setRatings(result);

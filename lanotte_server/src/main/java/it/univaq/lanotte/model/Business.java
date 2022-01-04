@@ -12,6 +12,10 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.*;
 
+@Getter
+@Setter
+@ToString
+
 @Document(collection = "business")
 public class Business {
     @Id
@@ -28,6 +32,10 @@ public class Business {
     private ArrayList<Product> products;
     @Field("opening_houres")
     private Map<String, ArrayList<String>> openingHoures;
+    @Field("number_ratings")
+    private Integer numberRatings;
+    @Field("rating_sum")
+    private Integer ratingSum;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -48,69 +56,5 @@ public class Business {
 //            json.put("image", Base64.getEncoder().encodeToString(image));
 //        }
         return json;
-    }
-
-    public ObjectId getId() {
-        return id;
-    }
-
-    public void setId(ObjectId id) {
-        this.id = id;
-    }
-
-    public String getBusinessName() {
-        return businessName;
-    }
-
-    public void setBusinessName(String businessName) {
-        this.businessName = businessName;
-    }
-
-    public String getVATNumber() {
-        return VATNumber;
-    }
-
-    public void setVATNumber(String VATNumber) {
-        this.VATNumber = VATNumber;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public double getRating() {
-        return rating;
-    }
-
-    public void setRating(double rating) {
-        this.rating = rating;
-    }
-
-    public ArrayList<Product> getProducts() {
-        return products;
-    }
-
-    public void setProducts(ArrayList<Product> products) {
-        this.products = products;
     }
 }

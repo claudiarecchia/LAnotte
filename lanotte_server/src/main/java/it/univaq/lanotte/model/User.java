@@ -4,16 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.bson.types.ObjectId;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.lang.reflect.Type;
-
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
