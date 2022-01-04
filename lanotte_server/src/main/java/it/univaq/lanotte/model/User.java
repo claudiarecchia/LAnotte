@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter
@@ -30,25 +31,20 @@ public class User {
     private String password;
     @Field("favourite_products")
     private Map<String, ArrayList<Product>> favouriteProducts;
+    private Map<String, Integer> ratings;
 
-    public User(){ }
+    public User(){
+        this.favouriteProducts = new HashMap<>();
+        this.ratings = new HashMap<>();
+    }
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        Gson gson = new Gson();
-        JSONArray fav_prod_list = new JSONArray();
         json.put("id", id);
         json.put("email", email);
         json.put("password", password);
-
-//        Type gsonType = new TypeToken<Map>(){}.getType();
-//        json.put("favourite_products", gson.toJson(favouriteProducts, gsonType));
-//        for (Map<String, Product> p : favouriteProducts) {
-//            fav_prod_list.put(p);
-//        }
         json.put("favourite_products", favouriteProducts);
-        //json.put("favourite_products", fav_prod_list);
-
+        json.put("ratings", ratings);
         System.out.println(json);
         return json;
     }

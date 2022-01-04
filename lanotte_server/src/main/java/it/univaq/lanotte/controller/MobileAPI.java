@@ -37,20 +37,6 @@ public class MobileAPI {
     @Autowired
     OrderRepository orderRepository;
 
-
-    @GetMapping("/drink")
-    @ResponseBody
-    public String drink() {
-        JSONArray j_arr = new JSONArray();
-        // JSONObject obj = new JSONObject();
-        Product p = productRepository.findByName("moscow mule");
-        // obj = p.toJSON();
-        j_arr.put(p.toJSON());
-        j_arr.put(p.toJSON());
-        j_arr.put(p.toJSON());
-        return j_arr.toString();
-    }
-
     @GetMapping("/allProducts")
     @ResponseBody
     public String products() {
@@ -100,17 +86,8 @@ public class MobileAPI {
 
             // is there is no user listed, then the user is a guest
             // so, we save a new empty user in the db and we get back the generated User
-//            if (body.has("user")){
-//                System.out.println("utente presente");
-//                JSONObject user1 = body.getJSONObject("user");
-//                Optional<User> user = userRepository.findById(user1.getString("id"));
-//                order.setUser(user.get());
-//                System.out.println(order.getUser().getId());
-//            }
-//
 
             JSONObject user1 = body.getJSONObject("user");
-            //if (!user1.toString().equals("{}")) {
             if ((user1.has("id") && !user1.isNull("id"))){
 
                 Optional<User> user = userRepository.findById(user1.getString("id"));
@@ -131,10 +108,8 @@ public class MobileAPI {
         } catch (JSONException e) { }
 
         Order saved_order = orderRepository.save(order);
-        //JSONObject return_order = new JSONObject(saved_order.toJSON());
         j_arr.put(saved_order.toJSON());
-        // j_arr.put(saved_order.toJSON());
-        //System.out.println(j_arr);
+
         return j_arr.toString();
     }
 
@@ -150,7 +125,7 @@ public class MobileAPI {
 
             Optional<User> user_opt = userRepository.findById(body.getString("id"));
             User user = user_opt.get();
-
+            System.out.println(user);
             List<Order> orders = orderRepository.findAllByUserOrderByIdDesc(user);
 
             for (Order o : orders)
@@ -222,6 +197,47 @@ public class MobileAPI {
 
             // update favs
             user.setFavouriteProducts(result);
+
+            userRepository.save(user);
+
+            // update all user's orders
+            for (Order o : user_orders){
+                o.setUser(user);
+                orderRepository.save(o);
+            }
+
+            j_arr.put(user.toJSON());
+        }
+        catch (JSONException e) { } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return j_arr.toString();
+    }
+
+    @PostMapping("/saveRatings")
+    @ResponseBody
+    public String saveRatings(@RequestBody String requestBody) {
+        JSONArray j_arr = new JSONArray();
+
+        try {
+            JSONObject body = new JSONObject(requestBody);
+            // System.out.println("BODY: " + body);
+
+            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+            User user = user_opt.get();
+
+            // save user's orders
+            List<Order> user_orders = orderRepository.findByUser(user);
+
+            // modify ratings
+            JSONObject obj = body.getJSONObject("ratings");
+            Map<String, Integer> result = new ObjectMapper().readValue(obj.toString(), new TypeReference<Map<String, Integer>>(){});
+
+            // update ratings
+            user.setRatings(result);
 
             userRepository.save(user);
 
