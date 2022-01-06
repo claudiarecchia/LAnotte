@@ -87,24 +87,24 @@ public class MobileAPI {
 
             // is there is no user listed, then the user is a guest
             // so, we save a new empty user in the db and we get back the generated User
-
             JSONObject user1 = body.getJSONObject("user");
-            if ((user1.has("id") && !user1.isNull("id"))){
+            if ((user1.has("apple_id") && !user1.isNull("apple_id"))){
 
-                Optional<User> user = userRepository.findById(user1.getString("id"));
+                Optional<User> user = userRepository.findByAppleId(user1.getString("apple_id"));
                 // System.out.println(user);
                 System.out.println("utente presente");
                 order.setUser(user.get());
                 System.out.println(order.getUser().getId());
             }
-            else {
-                System.out.println("utente NON presente");
-                User new_guest_user = userRepository.save(new User());
-                order.setUser(new_guest_user);
-            }
+
+//            else {
+//                System.out.println("utente NON presente");
+//                User new_guest_user = userRepository.save(new User(""));
+//                order.setUser(new_guest_user);
+//            }
 
             order.setDateTime(body.getString("date_time"));
-            System.out.println(order.getDateTime());
+            // System.out.println(order.getDateTime());
 
         } catch (JSONException e) { }
 
@@ -124,7 +124,7 @@ public class MobileAPI {
             JSONObject body = new JSONObject(requestBody);
             System.out.println("BODY " + body);
 
-            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
             User user = user_opt.get();
             System.out.println(user);
             List<Order> orders = orderRepository.findAllByUserOrderByIdDesc(user);
@@ -138,25 +138,25 @@ public class MobileAPI {
     }
 
 
-    @PostMapping("/lastOrder")
-    @ResponseBody
-    public String lastProductOrderedToday(@RequestBody String requestBody) {
-        JSONArray j_arr = new JSONArray();
-
-        try {
-            JSONObject body = new JSONObject(requestBody);
-            System.out.println(body);
-            Optional<User> user_opt = userRepository.findById(body.getString("id"));
-            User user = user_opt.get();
-
-            Order order = orderRepository.findFirstByUserOrderByIdDesc(user);
-            System.out.println(order);
-            j_arr.put(order.toJSON());
-        }
-        catch (JSONException e) { }
-
-        return j_arr.toString();
-    }
+//    @PostMapping("/lastOrder")
+//    @ResponseBody
+//    public String lastProductOrderedToday(@RequestBody String requestBody) {
+//        JSONArray j_arr = new JSONArray();
+//
+//        try {
+//            JSONObject body = new JSONObject(requestBody);
+//            System.out.println(body);
+//            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+//            User user = user_opt.get();
+//
+//            Order order = orderRepository.findFirstByUserOrderByIdDesc(user);
+//            System.out.println(order);
+//            j_arr.put(order.toJSON());
+//        }
+//        catch (JSONException e) { }
+//
+//        return j_arr.toString();
+//    }
 
     @PostMapping("/getUser")
     @ResponseBody
@@ -166,10 +166,20 @@ public class MobileAPI {
         try {
             JSONObject body = new JSONObject(requestBody);
             System.out.println(body);
-            Optional<User> user_opt = userRepository.findById(body.getString("id"));
-            User user = user_opt.get();
+            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
 
-            j_arr.put(user.toJSON());
+            // already present user in the db
+            if (user_opt.isPresent()) {
+                User user = user_opt.get();
+                j_arr.put(user.toJSON());
+            }
+
+            // is a new user -> creating a new one with the received apple_id
+            else{
+                User new_user = new User(body.getString("apple_id"));
+                userRepository.save(new_user);
+                j_arr.put(new_user.toJSON());
+            }
         }
         catch (JSONException e) { }
 
@@ -186,7 +196,7 @@ public class MobileAPI {
             JSONObject body = new JSONObject(requestBody);
             // System.out.println("BODY: " + body);
 
-            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
             User user = user_opt.get();
 
             // save user's orders
@@ -227,7 +237,7 @@ public class MobileAPI {
             JSONObject body = new JSONObject(requestBody);
             // System.out.println("BODY: " + body);
 
-            Optional<User> user_opt = userRepository.findById(body.getString("id"));
+            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
             User user = user_opt.get();
 
             // save user's orders

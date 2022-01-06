@@ -26,10 +26,13 @@ public class User {
     @Field("favourite_products")
     private Map<String, ArrayList<Product>> favouriteProducts;
     private Map<String, Integer> ratings;
+    @Field("apple_id")
+    private String appleId;
 
-    public User(){
+    public User(String appleId){
         this.favouriteProducts = new HashMap<>();
         this.ratings = new HashMap<>();
+        this.appleId = appleId;
     }
 
     public JSONObject toJSON() {
@@ -39,6 +42,7 @@ public class User {
         json.put("password", password);
         json.put("favourite_products", favouriteProducts);
         json.put("ratings", ratings);
+        json.put("apple_id", appleId);
         System.out.println(json);
         return json;
     }
