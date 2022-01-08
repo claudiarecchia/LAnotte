@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface BusinessRepository extends MongoRepository<Business, String> {
     Optional<Business> findByBusinessName(String businessName);
+    Optional<Business> findByVATNumber(String VATNumber);
 }
