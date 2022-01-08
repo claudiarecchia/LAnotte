@@ -37,6 +37,10 @@ public class Business {
     @Field("rating_sum")
     private Integer ratingSum;
 
+    private String city;
+    private String CAP;
+    private String password;
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         JSONArray prod_list = new JSONArray();
@@ -57,4 +61,23 @@ public class Business {
 //        }
         return json;
     }
+
+
+    public Business(String businessName, String VATNumber, String city, String CAP, String location, String password){
+        this.businessName = businessName;
+        this.VATNumber = VATNumber;
+        this.city = city;
+        this.CAP = CAP;
+        this.location = location;
+        this.password = password;
+        this.description = "";
+        this.rating = 0.0;
+        this.products = new ArrayList<>();
+        this.openingHoures = new HashMap<>();
+        this.numberRatings = 0;
+        this.ratingSum = 0;
+    }
+
+    public Business(){}
+
 }

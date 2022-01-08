@@ -73,8 +73,8 @@ public class MobileAPI {
             System.out.println(body);
 
             JSONObject business1 = body.getJSONObject("business");
-            Business business = businessRepository.findByBusinessName(business1.getString("business_name"));
-            order.setBusiness(business);
+            Optional<Business> business = businessRepository.findByBusinessName(business1.getString("business_name"));
+            order.setBusiness(business.get());
 
             JSONArray products = body.getJSONArray("products");
             // System.out.println(products);
@@ -261,7 +261,8 @@ public class MobileAPI {
 
             // rating for new business -> add rating
             if (keysOnlyInTarget.toString() != "[]") {
-                Business business = businessRepository.findByBusinessName(keysOnlyInTarget.iterator().next());
+                Optional<Business> business_opt = businessRepository.findByBusinessName(keysOnlyInTarget.iterator().next());
+                Business business = business_opt.get();
                 business.setNumberRatings(business.getNumberRatings() + 1);
                 System.out.println(result.get(keysOnlyInTarget.iterator().next()));
                 business.setRatingSum(business.getRatingSum() + result.get(keysOnlyInTarget.iterator().next()));
@@ -271,7 +272,8 @@ public class MobileAPI {
 
             // changed rating for an already reviewed business -> change rating
             if (entriesDiffering.toString() != "{}") {
-                Business business = businessRepository.findByBusinessName(entriesDiffering.keySet().iterator().next());
+                Optional<Business> business_opt = businessRepository.findByBusinessName(entriesDiffering.keySet().iterator().next());
+                Business business = business_opt.get();
 
                 // compute the difference
                 MapDifference.ValueDifference<Integer> list_difference = entriesDiffering.values().iterator().next();
