@@ -17,17 +17,12 @@ import java.util.Base64;
 @Document(collection = "products")
 public class Product {
 
-
-    public String getId() {
-        return id.toString();
-    }
-
     @Id
-    private ObjectId id;
+    private String id;
     private String name;
     private ArrayList<String> ingredients;
     // private byte[] image;
-    private String image;
+    private byte[] image;
     private String category;
     private ArrayList<String> stamps;
     private Double price;
@@ -40,12 +35,43 @@ public class Product {
         json.put("category", category);
         json.put("stamps", stamps);
         json.put("price", price);
-        json.put("image", image);
+        json.put("image", getImageBase64());
+
+        // json.put("image", image);
 
 //        if(image != null) {
 //            json.put("image", Base64.getEncoder().encodeToString(image));
 //        }
         return json;
     }
+
+    public String getImageBase64() {
+        String value = null;
+        if (image != null) {
+            value = Base64.getEncoder().encodeToString(image);
+        }
+        return value;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getIngredientsNames(){
+        String returnValue = "";
+        Integer length = this.ingredients.toArray().length;
+        for (int i = 0; i<length; i++){
+            if (i < length-1){
+                returnValue += this.ingredients.get(i) + ", ";
+            }
+            else{
+                returnValue += this.ingredients.get(i);
+            }
+        }
+
+        return returnValue;
+    }
+
+    public Product(){}
 
 }

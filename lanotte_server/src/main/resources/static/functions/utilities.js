@@ -79,5 +79,19 @@ function controllaPIVA() {
 
 function validateNewBusiness(){
     return !( !controllaPIVA() || !allowedCity() || !passwordCheck() );
+}
 
+var i = 0;
+
+function addIngredientField(){
+    var container = document.getElementById("ingredientsContainer");
+    var clone = container.cloneNode(true);
+    container.parentNode.appendChild(clone);
+}
+
+function addIngredientFieldMod(){
+    var container = document.getElementById("ingredientsContainer");
+    var clone = container.cloneNode(true);
+    var parent = document.getElementById("parentParentNode");
+   parent.appendChild(clone);
 }

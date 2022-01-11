@@ -1,5 +1,6 @@
 package it.univaq.lanotte.repository;
 
+import it.univaq.lanotte.model.Business;
 import it.univaq.lanotte.model.Order;
 import it.univaq.lanotte.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -17,5 +18,6 @@ public interface OrderRepository extends MongoRepository<Order, String> {
 
     Order findFirstByUserOrderByIdDesc(User user);
     List<Order> findAllByUserOrderByIdDesc(User user);
+    Optional<List<Order>> findByBusiness(Business business);
 
 }

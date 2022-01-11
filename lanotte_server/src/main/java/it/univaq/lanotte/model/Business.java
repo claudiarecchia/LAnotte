@@ -1,5 +1,6 @@
 package it.univaq.lanotte.model;
 
+import it.univaq.lanotte.Encryption;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -40,6 +41,8 @@ public class Business {
     private String city;
     private String CAP;
     private String password;
+    @Field("salt_value")
+    private String saltValue;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -69,15 +72,62 @@ public class Business {
         this.city = city;
         this.CAP = CAP;
         this.location = location;
-        this.password = password;
         this.description = "";
         this.rating = 0.0;
         this.products = new ArrayList<>();
         this.openingHoures = new HashMap<>();
         this.numberRatings = 0;
         this.ratingSum = 0;
+
+        List<String> passValues = EncryptPassword(password);
+        this.saltValue = passValues.get(0);
+        this.password = passValues.get(1);
+
     }
 
     public Business(){}
+
+
+    private List<String> EncryptPassword(String password){
+        /* generates the Salt value. It can be stored in a database. */
+        String saltvalue = Encryption.getSaltvalue(30);
+
+        /* generates an encrypted password. It can be stored in a database.*/
+        String encryptedpassword = Encryption.generateSecurePassword(password, saltvalue);
+
+        List<String> returnValues = new ArrayList<>();
+        returnValues.add(saltvalue);
+        returnValues.add(encryptedpassword);
+
+        return returnValues;
+    }
+
+    public void addProductToMenu(Product product){
+        List<Product> product_list = this.getProducts();
+        product_list.add(product);
+    }
+
+    public void removeProductFromMenu(Product product){
+        for (int i=0; i< products.size(); i++){
+            if (Objects.equals(products.get(i).getId(), product.getId())){
+                products.remove(products.get(i));
+            }
+        }
+    }
+
+    public void replaceProductInMenu(Product product){
+        removeProductFromMenu(product);  // works only with id value
+        addProductToMenu(product);  // adds the entire object
+    }
+
+    public Product searchProductByName(Product product){
+        for (Product p : products){
+            if (Objects.equals(p.getName(), product.getName()) &&
+                    !Objects.equals(p.getId(), product.getId())){
+                return p;
+            }
+        }
+        return null;
+    }
 
 }
