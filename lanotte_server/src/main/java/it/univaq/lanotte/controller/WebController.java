@@ -19,9 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpSession;
 import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 @RequestMapping({""})
@@ -70,10 +68,10 @@ public class WebController {
         String pageToReturn = "redirect:/index";
 
         Optional<Business> existingBusiness = businessRepository.findByBusinessName(business.getBusinessName());
-        System.out.println(existingBusiness.toString());
+        // System.out.println(existingBusiness.toString());
 
         Optional<Business> existingBusinessByVATNumber = businessRepository.findByVATNumber(business.getVATNumber());
-        System.out.println(existingBusinessByVATNumber.toString());
+        // System.out.println(existingBusinessByVATNumber.toString());
 
         // if in db there not exists a business with the same name
         // then the Business can be created
@@ -125,7 +123,7 @@ public class WebController {
                 // login successful -- save business in session
                 session.setAttribute("business", business_opt.get());
 
-                System.out.println(session.getAttribute("business"));
+                // System.out.println(session.getAttribute("business"));
             }
             // name is present but password does not match
             else{
@@ -145,7 +143,7 @@ public class WebController {
     @RequestMapping({"index"})
     public String index(Model m, HttpSession session) {
         Business business = (Business) session.getAttribute("business");
-        System.out.println("index: " + business);
+        // System.out.println("index: " + business);
         m.addAttribute("businessName", business.getBusinessName());
 
         return "index";
@@ -171,12 +169,7 @@ public class WebController {
             m.addAttribute("businessName", business.getBusinessName());
 
             m.addAttribute("product", new Product());
-            m.addAttribute("name");
             m.addAttribute("product_name_error", false);
-            m.addAttribute("category");
-            // m.addAttribute("image");
-            m.addAttribute("stamps", new ArrayList<String>());
-            m.addAttribute("ingredients", new ArrayList<String>());
         }
         // not logged in --> login
         else{
@@ -189,44 +182,43 @@ public class WebController {
     @RequestMapping(value = "addProduct", method = RequestMethod.POST)
     public String addProduct(@ModelAttribute Product product,
                              @RequestParam("file") MultipartFile image,
+                             @RequestParam("ingredient") ArrayList<String> ingredients,
                              Model m, HttpSession session) throws Exception {
         String pageToReturn = "addProduct";
-        //String pageToReturn = "redirect:/index";
-        System.out.println(product.getName());
 
         if (!(image.getOriginalFilename().contentEquals(""))) {
-            System.out.println(image);
-            System.out.println(image.getBytes());
-
             product.setImage(image.getBytes());
         }
+
+        product.setIngredients(ingredients);
         Business business = (Business) session.getAttribute("business");
 
+        // check if already exists a product with the same name
         Product alreadyExistingProduct = business.searchProductByName(product);
         if (alreadyExistingProduct != null){
             m.addAttribute("product_name_error", true);
             m.addAttribute("product", product);
         }
+        else {
+            // save orders for "old" business
+            Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
 
-        // save orders for "old" business
-        Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+            business.addProductToMenu(product);
 
-        business.addProductToMenu(product);
-
-        if (order_list.isPresent()){
-            for (Order o : order_list.get()){
-                o.setBusiness(business);
-                orderRepository.save(o);
+            if (order_list.isPresent()){
+                for (Order o : order_list.get()){
+                    o.setBusiness(business);
+                    orderRepository.save(o);
+                }
             }
+
+            productRepository.save(product);
+
+            // update business
+            businessRepository.save(business);
+
+            m.addAttribute("product", new Product());
         }
-
-        productRepository.save(product);
-
-        // update business
-        businessRepository.save(business);
-
-        m.addAttribute("product", new Product());
-
         return pageToReturn;
     }
 
@@ -260,18 +252,22 @@ public class WebController {
             pageToReturn = "redirect:/login";
         }
 
-        Business business = (Business) session.getAttribute("business");
+        else{
+            Business business = (Business) session.getAttribute("business");
 
-        Optional<Product> productToBeRemoved = productRepository.findById(id);
+            Optional<Product> productToBeRemoved = productRepository.findById(id);
 
-        // update products' list in business object
-        business.removeProductFromMenu(productToBeRemoved.get());
-        productRepository.deleteById(id);
-        // update business in db
-        businessRepository.save(business);
+            // update products' list in business object
+            business.removeProductFromMenu(productToBeRemoved.get());
+            productRepository.deleteById(id);
+            // update business in db
+            businessRepository.save(business);
 
-        m.addAttribute("businessName", business.getBusinessName());
-        m.addAttribute("products", business.getProducts());
+            m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("products", business.getProducts());
+        }
+
+
 
         return pageToReturn;
     }
@@ -291,8 +287,6 @@ public class WebController {
 
         if (productToModify.isPresent()) {
             Product prod = productToModify.get();
-
-            System.out.println(prod);
 
             m.addAttribute("businessName", business.getBusinessName());
             m.addAttribute("product", prod);
@@ -324,30 +318,146 @@ public class WebController {
             m.addAttribute("product_name_error", true);
             pageToReturn = "modProduct";
         }
+        else{
+            System.out.println("NEW INGREDIENTS" + new_ingredients);
+            product.setIngredients(new_ingredients);
 
-        System.out.println("NEW INGREDIENTS" + new_ingredients);
-        product.setIngredients(new_ingredients);
+            if (!(image.getOriginalFilename().contentEquals(""))) {
+                product.setImage(image.getBytes());
+            }
 
-        if (!(image.getOriginalFilename().contentEquals(""))) {
-            System.out.println(image);
-            System.out.println(image.getBytes());
+            // modify business' product list
+            business.replaceProductInMenu(product);
 
-            product.setImage(image.getBytes());
+            // update business in db
+            businessRepository.save(business);
+
+            // update products' list in db
+            productRepository.save(product);
+
+            m.addAttribute("businessName", business.getBusinessName());
+
+            m.addAttribute("products", business.getProducts());
         }
 
-        // modify business' product list
-        business.replaceProductInMenu(product);
-
-        // update business in db
-        businessRepository.save(business);
-
-        // update products' list in db
-        productRepository.save(product);
-
-        m.addAttribute("businessName", business.getBusinessName());
-
-        m.addAttribute("products", business.getProducts());
         return pageToReturn;
     }
 
+    @RequestMapping(value = "/businessProfile")
+    public String deleteProduct(Model m, HttpSession session) {
+
+        String pageToReturn = "businessProfile";
+
+        if (session.getAttribute("business") == null) {
+            pageToReturn = "redirect:/login";
+        }
+        else{
+            Business business = (Business) session.getAttribute("business");
+            m.addAttribute("business", business);
+            m.addAttribute("business_name_error", false);
+            m.addAttribute("VATNumber_error", false);
+        }
+
+        return pageToReturn;
+    }
+
+
+    @RequestMapping(value = "/applyChangesBusiness", method = RequestMethod.POST)
+    public String applyChangesBusiness(@ModelAttribute(value="business") Business modifiedBusiness,
+                                      @RequestParam("file") MultipartFile image,
+                                       @RequestParam("lun") ArrayList<String> lun,
+                                       @RequestParam("mar") ArrayList<String> mar,
+                                       @RequestParam("mer") ArrayList<String> mer,
+                                       @RequestParam("gio") ArrayList<String> gio,
+                                       @RequestParam("ven") ArrayList<String> ven,
+                                       @RequestParam("sab") ArrayList<String> sab,
+                                       @RequestParam("dom") ArrayList<String> dom,
+                                      Model m, HttpSession session) throws IOException {
+
+        String pageToReturn = "businessProfile";
+        // also change value stored in session
+        if (session.getAttribute("business") == null) {
+            pageToReturn = "redirect:/login";
+        }
+        else {
+            Business business = (Business) session.getAttribute("business");
+
+            // check error in name (already existing business)
+            String modifiedBusinessName = modifiedBusiness.getBusinessName();
+            if (!Objects.equals(modifiedBusinessName, business.getBusinessName())) {
+                Optional<Business> existingBusiness = businessRepository.findByBusinessName(modifiedBusinessName);
+                if (existingBusiness.isPresent()) {
+                    m.addAttribute("business_name_error", true);
+                    m.addAttribute("business", business);
+                }
+            } else {
+
+                // check VATNumber
+                String modifiedVATNumber = modifiedBusiness.getVATNumber();
+                if (!Objects.equals(modifiedVATNumber, business.getVATNumber())) {
+                    Optional<Business> existingBusiness = businessRepository.findByVATNumber(modifiedVATNumber);
+                    if (existingBusiness.isPresent()) {
+                        m.addAttribute("VATNumber_error", true);
+                        m.addAttribute("business", business);
+                    }
+                }
+                // no errors
+                else{
+                    modifiedBusiness.setOpeningHoures(new HashMap<>());
+                    modifiedBusiness.initOpeningHoures();
+                    modifiedBusiness.setOpeningHour("0", lun.get(0));
+                    modifiedBusiness.setClosingHour("0", lun.get(1));
+
+                    modifiedBusiness.setOpeningHour("1", mar.get(0));
+                    modifiedBusiness.setClosingHour("1", mar.get(1));
+
+                    modifiedBusiness.setOpeningHour("2", mer.get(0));
+                    modifiedBusiness.setClosingHour("2", mer.get(1));
+
+                    modifiedBusiness.setOpeningHour("3", gio.get(0));
+                    modifiedBusiness.setClosingHour("3", gio.get(1));
+
+                    modifiedBusiness.setOpeningHour("4", ven.get(0));
+                    modifiedBusiness.setClosingHour("4", ven.get(1));
+
+                    modifiedBusiness.setOpeningHour("5", sab.get(0));
+                    modifiedBusiness.setClosingHour("5", sab.get(1));
+
+                    modifiedBusiness.setOpeningHour("6", dom.get(0));
+                    modifiedBusiness.setClosingHour("6", dom.get(1));
+
+                    m.addAttribute("business", modifiedBusiness);
+                }
+
+
+
+//            if (!(image.getOriginalFilename().contentEquals(""))) {
+//                business.setImage(image.getBytes());
+//            }
+            }
+        }
+        return pageToReturn;
+    }
+
+    @RequestMapping(value = "/statistics")
+    public String statistics(Model m, HttpSession session) {
+        String pageToReturn = "statistics";
+
+        if (session.getAttribute("business") == null) {
+            pageToReturn = "redirect:/login";
+        }
+        else {
+            Business business = (Business) session.getAttribute("business");
+            m.addAttribute("business", business);
+
+            Optional<List<Order>> ordersForBusiness = orderRepository.findByBusiness(business);
+            if (ordersForBusiness.isPresent()){
+                m.addAttribute("numberOfOrders", ordersForBusiness.get().size());
+            }
+            else {
+                m.addAttribute("numberOfOrders", 0);
+            }
+        }
+        return pageToReturn;
+    }
 }

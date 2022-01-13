@@ -35,7 +35,7 @@ public class Product {
         json.put("category", category);
         json.put("stamps", stamps);
         json.put("price", price);
-        json.put("image", getImageBase64());
+        //json.put("image", getImageBase64());
 
         // json.put("image", image);
 

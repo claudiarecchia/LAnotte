@@ -23,9 +23,6 @@ function passwordCheck(){
     let pass2 = document.getElementById('pass2').value;
     var passwordCheck = Boolean(true);
 
-    console.log(pass1);
-    console.log(pass2);
-
     if (pass1 !== pass2) {
         alert("Le due password non combaciano. Reinserirle correttamente.");
         passwordCheck = false;
@@ -81,13 +78,11 @@ function validateNewBusiness(){
     return !( !controllaPIVA() || !allowedCity() || !passwordCheck() );
 }
 
-var i = 0;
-
-function addIngredientField(){
-    var container = document.getElementById("ingredientsContainer");
-    var clone = container.cloneNode(true);
-    container.parentNode.appendChild(clone);
+function validateBusinessModification(){
+    console.log("qui");
+    return !( !controllaPIVA() || !allowedCity());
 }
+
 
 function addIngredientFieldMod(){
     var container = document.getElementById("ingredientsContainer");

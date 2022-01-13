@@ -34,7 +34,7 @@
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index">
                 <div class="sidebar-brand-text mx-3">L'Anotte</div>
             </a>
 
@@ -43,7 +43,7 @@
 
             <!-- Nav Item - Dashboard -->
             <li class="nav-item">
-                <a class="nav-link" href="index.html">
+                <a class="nav-link" href="index">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Dashboard</span></a>
             </li>
@@ -58,7 +58,7 @@
 
             <!-- Nav Item - Charts -->
             <li class="nav-item">
-                <a class="nav-link" href="charts.html">
+                <a class="nav-link" href="statistics">
                     <i class="fas fa-fw fa-chart-area"></i>
                     <span>Statistiche</span></a>
             </li>
@@ -268,7 +268,7 @@
                             <!-- Dropdown - Business Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="businessProfile">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Profile
                                 </a>
@@ -313,7 +313,7 @@
 
                         <div class="form-group">
                             <input type="text" class="form-control"
-                                   id="productName" placeholder="Nome prodotto" required th:field="*{name}">
+                                   id="productName" placeholder="Nome prodotto" required th:field="*{name}" th:value="${product.getName()}">
                         </div>
 
 
@@ -332,17 +332,38 @@
                                    placeholder="Prezzo in €" required th:field="*{price}">
                         </div>
 
-                        <button class="btn btn-secondary mb-2" id="anotherIngredient" type="button" onclick="addIngredientField()">
+                        <button class="btn btn-secondary mb-2" id="anotherIngredient" type="button" onclick="addIngredientFieldMod()">
                             Inserisci un altro ingrediente
                         </button>
 
-                        <div class="form-group" id="ingredientsContainerParentNode">
-                            <div class="form-group" id="ingredientsContainer">
-                                <input type="text" class="form-control" onkeyup="return forceLower(this);"
-                                       id="ingredient" name="ingredient" placeholder="Ingrediente" required th:field="*{ingredients}">
-                            </div>
+                        <!-- Begin Ingredients section -->
+                        <div id="parentParentNode">
+                            <!-- If there are ingredients (if there has been an error) -->
+                            <span th:if="${product.getIngredients() != null}">
+                                <th:block th:each="ing : ${product.getIngredients()}">
+                                    <div class="form-group">
+                                        <div class="form-group">
+                                            <input type="text" class="form-control" onkeyup="return forceLower(this);"
+                                                   name="ingredient" placeholder="Ingrediente" th:value="${ing}">
+                                        </div>
+                                    </div>
+                                </th:block>
+                            </span>
+
+                            <!-- If there are no ingredients (product is a new Product) -->
+                            <span th:unless="${product.getIngredients() != null}">
+                                <div class="form-group">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" onkeyup="return forceLower(this);"
+                                               name="ingredient" placeholder="Ingrediente" th:value="${ing}">
+                                    </div>
+                                </div>
+                            </span>
+
+
                         </div>
 
+                        <!-- Begin Stamps section -->
                         <div class="form-group">
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="checkbox" id="veganCheckBox" value="vegan" th:field="*{stamps}">
@@ -411,6 +432,12 @@
         </div>
     </div>
 
+    <div hidden>
+        <div class="form-group" id="ingredientsContainer">
+            <input type="text" class="form-control" onkeyup="return forceLower(this);"
+                   name="ingredient" placeholder="Ingrediente" required >
+        </div>
+    </div>
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -429,6 +456,10 @@
     <script src="js/demo/chart-pie-demo.js"></script>
 
     <script>
+        $(document).ready(function(){
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+
     function forceLower(strInput) {
         strInput.value = strInput.value.toLowerCase();
     }

@@ -53,6 +53,7 @@
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-user" id="vat_number"
                                            placeholder="Partita IVA" th:field="*{VATNumber}" required>
+                                    <small class="form-text text-muted">Non la condivideremo con nessuno.</small>
                                 </div>
 
                                 <div class="alert-danger text-center rounded form-group" th:if="${VAT_error}">
@@ -92,7 +93,7 @@
                             </form>
                             <hr>
                             <div class="text-center">
-                                <a class="small" href="login.html">Hai già un account per la tua azienda? Effettua il login!</a>
+                                <a class="small" href="businessLogin">Hai già un account per la tua azienda? Effettua il login!</a>
                             </div>
                         </div>
                     </div>

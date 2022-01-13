@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>L'Anotte - Modifica prodotto</title>
+    <title>L'Anotte - Profilo attività</title>
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -65,16 +65,16 @@
 
             <!-- Nav Item - Pages Collapse Menu -->
             <li class="nav-item">
-                <a class="nav-link show" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
                     aria-expanded="true" aria-controls="collapseTwo">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Menù attività</span>
                 </a>
-                <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Azioni</h6>
-                        <a class="collapse-item active" href="menu">Visualizza il menù</a>
-                        <a class="collapse-item" href="addProduct" >Aggiungi prodotto</a>
+                        <a class="collapse-item" href="menu">Visualizza il menù</a>
+                        <a class="collapse-item" href="addProduct">Aggiungi prodotto</a>
                     </div>
                 </div>
             </li>
@@ -261,7 +261,7 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small" th:text="${businessName}" > </span>
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small" th:text="${business.getBusinessName()}" > </span>
                                 <img class="img-profile rounded-circle"
                                     src="img/undraw_profile.svg">
                             </a>
@@ -301,97 +301,183 @@
 
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">Modifica prodotto</h1>
+                        <h1 class="h3 mb-0 text-gray-800">Profilo attività</h1>
                     </div>
 
+                    <form class="user" enctype="multipart/form-data" th:action="@{'/applyChangesBusiness'}" method="post"
+                          th:object="${business}" onsubmit="return validateBusinessModification()">
 
+                        <div th:if="${business.getImageBase64() != '' } " class="form-group row">>
+                            <div class="col-sm-6">
+                                <img th:src="@{'data:image/jpeg;base64,'+${business.getImageBase64()}}" height=150px />
+                            </div>
 
-                    <form class="user" enctype="multipart/form-data" th:action="@{'/applyChangesProduct'}" method="post" th:object="${product}">
-
-                        <div class="mb-3">
-                            <label for="file" class="form-label">Seleziona una nuova immagine</label>
-                            <input class="form-control" type="file" name="file" id="file">
+                            <div class="mb-3 col-sm-6">
+                                <label for="file" class="form-label">Seleziona una nuova immagine</label>
+                                <input class="form-control" type="file" name="file" id="file">
+                            </div>
                         </div>
 
-                             <input type="hidden" id="productId" th:field="*{id}">
-                             <input type="hidden" id="productImage" th:field="*{image}">
+                        <div th:unless="${business.getImageBase64() != '' } ">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Non hai ancora aggiunto un'immagine per la tua attività. Selezionane una.</label>
+                                <input class="form-control" type="file" name="file" id="new_file">
+                            </div>
+                        </div>
+
+                             <input type="hidden" id="businessId" th:field="*{id}">
+                             <input type="hidden" id="businessImage" th:field="*{image}">
+
 
 
                              <div class="form-group">
+                                 <label for="businessName">Nome attività</label>
                                  <input type="text" class="form-control"
-                                        id="productName" placeholder="Nome prodotto" required th:field="*{name}" th:value="${product.getName()}">
+                                        id="businessName" placeholder="Nome attività" required th:field="*{businessName}" th:value="${business.getBusinessName()}">
                              </div>
 
 
-                         <div class="alert-danger text-center rounded form-group" th:if="${product_name_error}">
-                            Esiste già un prodotto con questo nome nel menù.
+                         <div class="alert-danger text-center rounded form-group" th:if="${business_name_error}">
+                            Esiste già un'azienda con questo nome.
                         </div>
 
                         <div class="form-group">
-                            <input type="text" class="form-control"
-                                   placeholder="Categoria" required th:field="*{category}" th:value="${product.getCategory()}"
-                                   data-toggle="tooltip" data-placement="top" title="Esempio: long drink, vino, birra...">
+                            <label for="vat_number">Partita IVA</label>
+                            <input type="text" class="form-control" id="vat_number"
+                                   placeholder="Partita IVA" required th:field="*{VATNumber}" th:value="${business.getVATNumber()}">
+                            <small class="form-text text-muted">Non la condivideremo con nessuno.</small>
                         </div>
 
-                        <div class="form-group">
-                            <input type="number" class="form-control"
-                                   placeholder="Prezzo in €" required th:field="*{price}" th:value="${product.getPrice()}">
-                        </div>
-
-                        <button class="btn btn-secondary mb-2" id="anotherIngredient" type="button" onclick="addIngredientFieldMod()">
-                            Inserisci un altro ingrediente
-                        </button>
-
-                    <!-- Begin Ingredients section -->
-                        <div id="parentParentNode">
-                            <th:block th:each="ing : ${product.getIngredients()}">
-                                <div class="form-group" id="ingredientsContainerParentNode">
-                                    <div class="form-group">
-                                        <input type="text" class="form-control" onkeyup="return forceLower(this);"
-                                               name="ingredient" placeholder="Ingrediente" th:value="${ing}">
-                                    </div>
-                                </div>
-                            </th:block>
-                        </div>
-
-                    <!-- Begin Stamps section -->
-                        <div class="form-group">
-                            <div class="form-check form-check-inline">
-                                <span th:if="${product.getStamps().contains('vegan')}">
-                                    <input class="form-check-input " type="checkbox" id="veganCheckBox1" value="vegan" th:field="*{stamps}" checked>
-                                    <label class="form-check-label" for="veganCheckBox1">
-                                        Vegan
-                                    </label>
-                                </span>
-
-                                <span th:unless="${product.getStamps().contains('vegan')}">
-                                    <input class="form-check-input" type="checkbox" id="veganCheckBox2" value="vegan" th:field="*{stamps}">
-                                    <label class="form-check-label" for="veganCheckBox2">
-                                        Vegan
-                                    </label>
-                                </span>
+                        <div class="form-group row">
+                            <div class="form-group col-sm-4" >
+                                <input type="text" class="form-control" id="city"
+                                       placeholder="Città" required th:field="*{city}" th:value="${business.getCity()}">
                             </div>
 
-                                <div class="form-check form-check-inline">
-                                    <span th:if="${product.getStamps().contains('gluten free')}">
-                                        <input class="form-check-input" type="checkbox" id="glutenFreeCheckBox1" value="gluten free" th:field="*{stamps}" checked>
-                                        <label class="form-check-label" for="glutenFreeCheckBox1">
-                                            Gluten free
-                                        </label>
-                                    </span>
+                            <div class="form-group col-sm-4">
+                                <input type="text" class="form-control" id="CAP"
+                                       placeholder="CAP" required th:field="*{CAP}" th:value="${business.getCAP()}">
+                            </div>
 
-                                    <span th:unless="${product.getStamps().contains('gluten free')}">
-                                        <input class="form-check-input" type="checkbox" id="glutenFreeCheckBox2" value="gluten free" th:field="*{stamps}">
-                                        <label class="form-check-label" for="glutenFreeCheckBox2">
-                                            Gluten free
-                                        </label>
-                                    </span>
-                                </div>
+                            <div class="form-group col-sm-4">
+                                <input type="text" class="form-control" id="address"
+                                       placeholder="Indirizzo" required th:field="*{location}" th:value="${business.getLocation()}">
+                            </div>
+                        </div>
 
+<!--                        <div class="form-group">-->
+<!--                            <input type="text" class="form-control"-->
+<!--                                   placeholder="Password" required th:field="*{password}" th:value="${business.getPassword()}">-->
+<!--                        </div>-->
+                        <p>Inserisci gli orari di apertura/chiusura del tuo locale che saranno visibili agli utenti. Gli orari dei giorni di chiusura puoi lasciarli bianchi!</p>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <td>Giorno</td>
+                                        <td>Orario apertura</td>
+                                        <td>Orario chiusura</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>
+                                        Lun
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="lun"
+                                                th:value="${business.getOpeningHour('0')}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="lun"
+                                                th:value="${business.getClosingHour('0')}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Mar
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="mar"
+                                                th:value="${business.getOpeningHour('1')}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="mar"
+                                                th:value="${business.getClosingHour('1')}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Mer
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="mer"
+                                                th:value="${business.getOpeningHour('2')}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="mer"
+                                                th:value="${business.getClosingHour('2')}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Gio
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="gio"
+                                                th:value="${business.getOpeningHour('3')}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="gio"
+                                                th:value="${business.getClosingHour('3')}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Ven
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="ven"
+                                                th:value="${business.getOpeningHour('4')}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="ven"
+                                                th:value="${business.getClosingHour('4')}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Sab
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="sab"
+                                                th:value="${business.getOpeningHour('5')}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="sab"
+                                                th:value="${business.getClosingHour('5')}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Dom
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="dom"
+                                                th:value="${business.getOpeningHour('6')}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="dom"
+                                                th:value="${business.getClosingHour('6')}">
+                                    </td>
+                                </tr>
+
+                                </tbody>
+                            </table>
                         </div>
 
                         <button class="btn btn-primary btn-user btn-block" type="submit">
-                            Modifica prodotto
+                            Salva e modifica dati attività
                         </button>
                     </form>
 
@@ -443,12 +529,6 @@
         </div>
     </div>
 
-    <div hidden>
-        <div class="form-group" id="ingredientsContainer">
-            <input type="text" class="form-control" onkeyup="return forceLower(this);"
-                   name="ingredient" placeholder="Ingrediente">
-        </div>
-    </div>
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>

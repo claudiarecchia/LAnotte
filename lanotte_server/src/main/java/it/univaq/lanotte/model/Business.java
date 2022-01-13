@@ -11,6 +11,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.io.File;
 import java.util.*;
 
 @Getter
@@ -26,8 +27,8 @@ public class Business {
     @Field("VAT_number")
     private String VATNumber;
     private String description;
-    //private byte[] image;
-    private String image;
+    private byte[] image;
+    // private String image;
     private String location;
     private Double rating;
     private ArrayList<Product> products;
@@ -51,13 +52,14 @@ public class Business {
         json.put("business_name", businessName);
         json.put("VAT_number", VATNumber);
         json.put("description", description);
+        // json.put("image", image);
         json.put("location", location);
         json.put("rating", rating);
         for (Product p : products)
             prod_list.put(p.toJSON());
         json.put("products", prod_list);
         json.put("opening_houres", openingHoures);
-        json.put("image", image);
+
 
 //        if(image != null) {
 //            json.put("image", Base64.getEncoder().encodeToString(image));
@@ -87,6 +89,13 @@ public class Business {
 
     public Business(){}
 
+    public String getImageBase64() {
+        String value = null;
+        if (image != null) {
+            value = Base64.getEncoder().encodeToString(image);
+        }
+        return value;
+    }
 
     private List<String> EncryptPassword(String password){
         /* generates the Salt value. It can be stored in a database. */
@@ -128,6 +137,34 @@ public class Business {
             }
         }
         return null;
+    }
+
+    public String getOpeningHour(String day){
+        return this.openingHoures.get(day).get(0);
+    }
+
+    public String getClosingHour(String day){
+        return this.openingHoures.get(day).get(1);
+    }
+
+    public void setOpeningHour(String day, String hour){
+        this.openingHoures.get(day).set(0, hour);
+
+    }
+
+    public void setClosingHour(String day, String hour){
+        this.openingHoures.get(day).set(1, hour);
+    }
+
+    public void initOpeningHoures(){
+        ArrayList<String> dayList = new ArrayList<>(
+                Arrays.asList("0", "1", "2", "3", "4", "5", "6")
+        );
+        for (int i=0; i<7; i++){
+            this.openingHoures.put(dayList.get(i), new ArrayList<>(
+                    Arrays.asList("", "")
+            ));
+        }
     }
 
 }
