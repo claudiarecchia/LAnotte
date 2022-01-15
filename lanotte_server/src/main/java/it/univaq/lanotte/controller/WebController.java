@@ -19,6 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpSession;
 import javax.swing.text.html.Option;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Controller
@@ -37,13 +40,15 @@ public class WebController {
     @Autowired
     OrderRepository orderRepository;
 
-    @RequestMapping({"home", "/", "dashboard"})
-    public String home(Model m, HttpSession session) {
-
-        String toReturn = "index";
-
-        return toReturn;
-    }
+//    @RequestMapping({"home", "/", "dashboard"})
+//    public String home(Model m, HttpSession session) {
+//        Business business = (Business) session.getAttribute("session");
+//        m.addAttribute("business", business);
+//
+//        String toReturn = "index";
+//
+//        return toReturn;
+//    }
 
     @RequestMapping({"businessRegistration"})
     public String businessRegistration(Model m, HttpSession session) {
@@ -65,7 +70,7 @@ public class WebController {
                         Model m,
                         HttpSession session) throws Exception {
 
-        String pageToReturn = "redirect:/index";
+        String pageToReturn = "index";
 
         Optional<Business> existingBusiness = businessRepository.findByBusinessName(business.getBusinessName());
         // System.out.println(existingBusiness.toString());
@@ -80,6 +85,9 @@ public class WebController {
             Business new_business = new Business(business.getBusinessName(),
                     business.getVATNumber(), business.getCity(), business.getCAP(),
                     business.getLocation(), business.getPassword());
+
+            // set default image
+            new_business.setImage(Files.readAllBytes(Paths.get("src/main/resources/static/img/pub_birreria.jpg")));
 
             businessRepository.save(new_business);
 
@@ -140,16 +148,25 @@ public class WebController {
         return pageToReturn;
     }
 
-    @RequestMapping({"index"})
+    @RequestMapping({"index", "/"})
     public String index(Model m, HttpSession session) {
         Business business = (Business) session.getAttribute("business");
         // System.out.println("index: " + business);
         m.addAttribute("businessName", business.getBusinessName());
+        m.addAttribute("business", business);
+
+        Optional<List<Order>> ordersForBusiness = orderRepository.findByBusiness(business);
+        if (ordersForBusiness.isPresent()){
+            m.addAttribute("numberOfOrders", ordersForBusiness.get().size());
+        }
+        else {
+            m.addAttribute("numberOfOrders", 0);
+        }
 
         return "index";
     }
 
-    @RequestMapping({"logout"})
+    @RequestMapping({"businessLogout"})
     public String logout(Model m, HttpSession session) {
 
         session.removeAttribute("business");
@@ -184,10 +201,15 @@ public class WebController {
                              @RequestParam("file") MultipartFile image,
                              @RequestParam("ingredient") ArrayList<String> ingredients,
                              Model m, HttpSession session) throws Exception {
-        String pageToReturn = "addProduct";
+        String pageToReturn = "menu";
 
+        // selected an image
         if (!(image.getOriginalFilename().contentEquals(""))) {
             product.setImage(image.getBytes());
+        }
+        // no image selected --> default image
+        else {
+            product.setImage(Files.readAllBytes(Paths.get("src/main/resources/static/img/mule-mug-rame.jpg")));
         }
 
         product.setIngredients(ingredients);
@@ -198,11 +220,11 @@ public class WebController {
         if (alreadyExistingProduct != null){
             m.addAttribute("product_name_error", true);
             m.addAttribute("product", product);
+            pageToReturn = "addProduct";
         }
         else {
             // save orders for "old" business
             Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
-
             business.addProductToMenu(product);
 
             if (order_list.isPresent()){
@@ -217,7 +239,9 @@ public class WebController {
             // update business
             businessRepository.save(business);
 
-            m.addAttribute("product", new Product());
+            m.addAttribute("businessName", business.getBusinessName());
+            List<Product> product_list = business.getProducts();
+            m.addAttribute("products", product_list);
         }
         return pageToReturn;
     }
@@ -320,6 +344,9 @@ public class WebController {
         }
         else{
             System.out.println("NEW INGREDIENTS" + new_ingredients);
+            while (new_ingredients.contains("")){
+                new_ingredients.remove("");
+            }
             product.setIngredients(new_ingredients);
 
             if (!(image.getOriginalFilename().contentEquals(""))) {
@@ -391,7 +418,6 @@ public class WebController {
                     m.addAttribute("business", business);
                 }
             } else {
-
                 // check VATNumber
                 String modifiedVATNumber = modifiedBusiness.getVATNumber();
                 if (!Objects.equals(modifiedVATNumber, business.getVATNumber())) {
@@ -426,38 +452,27 @@ public class WebController {
                     modifiedBusiness.setOpeningHour("6", dom.get(0));
                     modifiedBusiness.setClosingHour("6", dom.get(1));
 
-                    m.addAttribute("business", modifiedBusiness);
+
+                    // update business in session and on db
+                    business.setBusinessName(modifiedBusiness.getBusinessName());
+                    business.setVATNumber(modifiedVATNumber);
+                    business.setCity(modifiedBusiness.getCity());
+                    business.setCAP(modifiedBusiness.getCAP());
+                    business.setLocation(modifiedBusiness.getLocation());
+                    if (!(image.getOriginalFilename().contentEquals(""))) {
+                        business.setImage(image.getBytes());
+                    }
+
+
+                    businessRepository.save(business);
+                    session.removeAttribute("business");
+                    session.setAttribute("business", business);
+
+                    m.addAttribute("business", business);
                 }
-
-
-
-//            if (!(image.getOriginalFilename().contentEquals(""))) {
-//                business.setImage(image.getBytes());
-//            }
             }
         }
         return pageToReturn;
     }
 
-    @RequestMapping(value = "/statistics")
-    public String statistics(Model m, HttpSession session) {
-        String pageToReturn = "statistics";
-
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
-        else {
-            Business business = (Business) session.getAttribute("business");
-            m.addAttribute("business", business);
-
-            Optional<List<Order>> ordersForBusiness = orderRepository.findByBusiness(business);
-            if (ordersForBusiness.isPresent()){
-                m.addAttribute("numberOfOrders", ordersForBusiness.get().size());
-            }
-            else {
-                m.addAttribute("numberOfOrders", 0);
-            }
-        }
-        return pageToReturn;
-    }
 }

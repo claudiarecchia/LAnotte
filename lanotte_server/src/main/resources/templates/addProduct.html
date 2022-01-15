@@ -49,34 +49,13 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
-
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Interface
-            </div>
+            <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Charts -->
-            <li class="nav-item">
-                <a class="nav-link" href="statistics">
-                    <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Statistiche</span></a>
-            </li>
-
-            <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link show" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
+            <li class="nav-item active">
+                <a class="nav-link" href="menu">
                     <i class="fas fa-fw fa-cog"></i>
-                    <span>Menù attività</span>
-                </a>
-                <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Azioni</h6>
-                        <a class="collapse-item" href="menu">Visualizza il menù</a>
-                        <a class="collapse-item active" href="addProduct" >Aggiungi prodotto</a>
-                    </div>
-                </div>
+                    <span>Gestisci menù</span></a>
             </li>
 
             <!-- Divider -->
@@ -85,13 +64,6 @@
             <!-- Sidebar Toggler (Sidebar) -->
             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
-
-            <!-- Sidebar Message -->
-            <div class="sidebar-card d-none d-lg-flex">
-                <img class="sidebar-card-illustration mb-2" src="img/undraw_rocket.svg" alt="...">
-                <p class="text-center mb-2"><strong>SB Admin Pro</strong> is packed with premium features, components, and more!</p>
-                <a class="btn btn-success btn-sm" href="https://startbootstrap.com/theme/sb-admin-pro">Upgrade to Pro!</a>
             </div>
 
         </ul>
@@ -281,7 +253,7 @@
                                     Activity Log
                                 </a>
                                 <div class="dropdown-divider"></div>
-                                <form th:action="@{'/logout'}">
+                                <form th:action="@{'/businessLogout'}">
                                     <button class="dropdown-item" data-toggle="modal" data-target="#logoutModal" type="submit">
                                         <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                         Logout

@@ -28,7 +28,6 @@ public class Business {
     private String VATNumber;
     private String description;
     private byte[] image;
-    // private String image;
     private String location;
     private Double rating;
     private ArrayList<Product> products;
@@ -52,7 +51,11 @@ public class Business {
         json.put("business_name", businessName);
         json.put("VAT_number", VATNumber);
         json.put("description", description);
-        // json.put("image", image);
+
+        if(image != null) {
+            json.put("image", Base64.getEncoder().encodeToString(image));
+        }
+
         json.put("location", location);
         json.put("rating", rating);
         for (Product p : products)
@@ -60,10 +63,6 @@ public class Business {
         json.put("products", prod_list);
         json.put("opening_houres", openingHoures);
 
-
-//        if(image != null) {
-//            json.put("image", Base64.getEncoder().encodeToString(image));
-//        }
         return json;
     }
 

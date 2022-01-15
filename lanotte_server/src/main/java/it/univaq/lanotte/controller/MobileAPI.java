@@ -85,7 +85,7 @@ public class MobileAPI {
             }
             order.setProducts(product_list);
 
-            // is there is no user listed, then the user is a guest
+            // if there is no user listed, then the user is a guest
             // so, we save a new empty user in the db and we get back the generated User
             JSONObject user1 = body.getJSONObject("user");
             if ((user1.has("apple_id") && !user1.isNull("apple_id"))){

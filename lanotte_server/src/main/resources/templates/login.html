@@ -43,7 +43,7 @@
                                     </div>
                                     <form class="user" th:action="@{'/businessLogin'}" method="post" th:object="${business}">
                                         <div class="form-group">
-                                            <input type="text" class="form-control form-control-user"
+                                            <input type="text" class="form-control form-control-user" name="businessName"
                                                 id="businessName" placeholder="Nome attività" required th:field="*{businessName}">
                                         </div>
 
@@ -52,7 +52,7 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <input type="password" class="form-control form-control-user"
+                                            <input type="password" class="form-control form-control-user" name="password"
                                                 id="password" placeholder="Password" required th:field="*{password}">
                                         </div>
 

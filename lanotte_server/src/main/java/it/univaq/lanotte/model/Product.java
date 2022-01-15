@@ -21,7 +21,6 @@ public class Product {
     private String id;
     private String name;
     private ArrayList<String> ingredients;
-    // private byte[] image;
     private byte[] image;
     private String category;
     private ArrayList<String> stamps;
@@ -35,13 +34,10 @@ public class Product {
         json.put("category", category);
         json.put("stamps", stamps);
         json.put("price", price);
-        //json.put("image", getImageBase64());
 
-        // json.put("image", image);
-
-//        if(image != null) {
-//            json.put("image", Base64.getEncoder().encodeToString(image));
-//        }
+        if(image != null) {
+            json.put("image", Base64.getEncoder().encodeToString(image));
+        }
         return json;
     }
 
