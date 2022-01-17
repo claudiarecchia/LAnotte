@@ -2,9 +2,7 @@ package it.univaq.lanotte.controller;
 
 
 import it.univaq.lanotte.Encryption;
-import it.univaq.lanotte.model.Business;
-import it.univaq.lanotte.model.Order;
-import it.univaq.lanotte.model.Product;
+import it.univaq.lanotte.model.*;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.OrderRepository;
 import it.univaq.lanotte.repository.ProductRepository;
@@ -151,17 +149,41 @@ public class WebController {
     @RequestMapping({"index", "/"})
     public String index(Model m, HttpSession session) {
         Business business = (Business) session.getAttribute("business");
+
         // System.out.println("index: " + business);
         m.addAttribute("businessName", business.getBusinessName());
+        m.addAttribute("ratingsAvg", business.getRating());
+        m.addAttribute("numberRating", business.getNumberRatings());
         m.addAttribute("business", business);
 
         Optional<List<Order>> ordersForBusiness = orderRepository.findByBusiness(business);
-        if (ordersForBusiness.isPresent()){
+        if (ordersForBusiness.isPresent()) {
             m.addAttribute("numberOfOrders", ordersForBusiness.get().size());
-        }
-        else {
+        } else {
             m.addAttribute("numberOfOrders", 0);
         }
+
+        Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+        List<Order> placedOrders = null;
+        List<Order> preparingOrders = null;
+        List<Order> preparedOrders = null;
+        if (order_list.isPresent()) {
+            placedOrders = new ArrayList<>();
+            preparingOrders = new ArrayList<>();
+            preparedOrders = new ArrayList<>();
+            for (Order o : order_list.get()) {
+                switch (o.getStatus()) {
+                    case placed -> placedOrders.add(o);
+                    case preparing -> preparingOrders.add(o);
+                    case prepared -> preparedOrders.add(o);
+                }
+            }
+        }
+
+        m.addAttribute("placedOrders", placedOrders);
+        m.addAttribute("preparingOrders", preparingOrders);
+        m.addAttribute("preparedOrders", preparedOrders);
+
 
         return "index";
     }
@@ -226,10 +248,9 @@ public class WebController {
             // save orders for "old" business
             Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
             business.addProductToMenu(product);
-
             if (order_list.isPresent()){
                 for (Order o : order_list.get()){
-                    o.setBusiness(business);
+                    o.updateValuesBusiness(business);
                     orderRepository.save(o);
                 }
             }
@@ -238,6 +259,10 @@ public class WebController {
 
             // update business
             businessRepository.save(business);
+
+            // update stored value in session
+            session.removeAttribute("business");
+            session.setAttribute("business", business);
 
             m.addAttribute("businessName", business.getBusinessName());
             List<Product> product_list = business.getProducts();
@@ -286,6 +311,13 @@ public class WebController {
             productRepository.deleteById(id);
             // update business in db
             businessRepository.save(business);
+
+            // update fav for each user
+            List<User> user_list = userRepository.findAll();
+            for (User u : user_list){
+                u.removeProductFromFavourites(productToBeRemoved.get(), business);
+                userRepository.save(u);
+            }
 
             m.addAttribute("businessName", business.getBusinessName());
             m.addAttribute("products", business.getProducts());
@@ -361,6 +393,20 @@ public class WebController {
 
             // update products' list in db
             productRepository.save(product);
+
+            // update fav for each user
+            List<User> user_list = userRepository.findAll();
+            for (User u : user_list){
+                u.updateValuesFavouriteProduct(product, business);
+                userRepository.save(u);
+            }
+
+            // update in each order
+            List<Order> order_list = orderRepository.findAll();
+            for (Order o : order_list){
+                o.updateValuesProduct(product);
+                orderRepository.save(o);
+            }
 
             m.addAttribute("businessName", business.getBusinessName());
 
@@ -474,5 +520,69 @@ public class WebController {
         }
         return pageToReturn;
     }
+
+    @RequestMapping(value = "/signAsPrepared", method = RequestMethod.POST)
+    public String signAsPrepared(@RequestParam(value="prepared") String id,
+                                Model m, HttpSession session) {
+
+        String pageToReturn = "redirect:/index";
+
+        if (session.getAttribute("business") == null) {
+            pageToReturn = "redirect:/login";
+        }
+
+        Business business = (Business) session.getAttribute("business");
+
+        Optional<Order> preparedOrder = orderRepository.findById(id);
+        if (preparedOrder.isPresent()){
+            preparedOrder.get().setStatus(OrderStatus.prepared);
+            orderRepository.save(preparedOrder.get());
+        }
+
+        return pageToReturn;
+    }
+
+    @RequestMapping(value = "/signAsToPrepare", method = RequestMethod.POST)
+    public String signAsToPrepare(@RequestParam(value="toPrepare") String id,
+                                Model m, HttpSession session) {
+
+        String pageToReturn = "redirect:/index";
+
+        if (session.getAttribute("business") == null) {
+            pageToReturn = "redirect:/login";
+        }
+
+        Business business = (Business) session.getAttribute("business");
+
+        Optional<Order> orderToPrepare = orderRepository.findById(id);
+        if (orderToPrepare.isPresent()){
+            orderToPrepare.get().setStatus(OrderStatus.preparing);
+            orderRepository.save(orderToPrepare.get());
+        }
+
+        return pageToReturn;
+    }
+
+    @RequestMapping(value = "/signAsCollected", method = RequestMethod.POST)
+    public String signAsCollected(@RequestParam(value="toCollect") String id,
+                                Model m, HttpSession session) {
+
+        String pageToReturn = "redirect:/index";
+
+        if (session.getAttribute("business") == null) {
+            pageToReturn = "redirect:/login";
+        }
+
+        Business business = (Business) session.getAttribute("business");
+
+        Optional<Order> orderToPrepare = orderRepository.findById(id);
+        if (orderToPrepare.isPresent()){
+            orderToPrepare.get().setStatus(OrderStatus.collected);
+            orderRepository.save(orderToPrepare.get());
+        }
+
+        return pageToReturn;
+    }
+
 
 }

@@ -26,10 +26,12 @@ public class Order {
     private String dateTime;
     @Field("estimated_hour")
     private String estimatedHour;
-    private String state;
+    // private String state;
     private ArrayList<Product> products;
     private Business business;
     private User user;
+    @Field("order_status")
+    private OrderStatus status;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -44,6 +46,24 @@ public class Order {
         json.put("business", business.toJSON());
         json.put("user", user.toJSON());
         return json;
+    }
+
+
+    public void updateValuesProduct(Product product){
+
+        for (int i=0; i<products.size(); i++){
+            if (products.get(i).getId().equals(product.getId())){
+                products.remove(i);
+                products.add(product);
+                break;
+            }
+        }
+    }
+
+    public void updateValuesBusiness(Business business){
+        this.business.setNumberRatings(business.getNumberRatings());
+        this.business.setRatingSum(business.getRatingSum());
+        this.business.setRating(business.getRating());
     }
 
 }

@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import it.univaq.lanotte.model.Business;
-import it.univaq.lanotte.model.Order;
-import it.univaq.lanotte.model.Product;
-import it.univaq.lanotte.model.User;
+import it.univaq.lanotte.model.*;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.OrderRepository;
 import it.univaq.lanotte.repository.ProductRepository;
@@ -84,6 +81,9 @@ public class MobileAPI {
                 // System.out.println(product);
             }
             order.setProducts(product_list);
+
+            // set the status
+            order.setStatus(OrderStatus.placed);
 
             // if there is no user listed, then the user is a guest
             // so, we save a new empty user in the db and we get back the generated User
@@ -183,6 +183,8 @@ public class MobileAPI {
         }
         catch (JSONException e) { }
 
+        System.out.println("IMHERE " + j_arr);
+
         return j_arr.toString();
     }
 
@@ -254,20 +256,35 @@ public class MobileAPI {
             Set<String> keysOnlyInTarget = diff.entriesOnlyOnRight().keySet();
             Map<String, MapDifference.ValueDifference<Integer>> entriesDiffering = diff.entriesDiffering();
 
-            System.out.println("ELEMENTI DIFFERENTI:");
-            System.out.println(keysOnlyInSource);
-            System.out.println(keysOnlyInTarget);
-            System.out.println(entriesDiffering);
+            // System.out.println("ELEMENTI DIFFERENTI:");
+            // System.out.println(keysOnlyInSource);
+            // System.out.println(keysOnlyInTarget);
+            // System.out.println(entriesDiffering);
 
             // rating for new business -> add rating
             if (keysOnlyInTarget.toString() != "[]") {
                 Optional<Business> business_opt = businessRepository.findByBusinessName(keysOnlyInTarget.iterator().next());
                 Business business = business_opt.get();
+
+                // save all orders with the new computed ratings for the business (before modifying)
+                Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+
+                // apply mod
                 business.setNumberRatings(business.getNumberRatings() + 1);
-                System.out.println(result.get(keysOnlyInTarget.iterator().next()));
+                // System.out.println(result.get(keysOnlyInTarget.iterator().next()));
                 business.setRatingSum(business.getRatingSum() + result.get(keysOnlyInTarget.iterator().next()));
                 business.setRating((double) (business.getRatingSum() / business.getNumberRatings()));
+
                 businessRepository.save(business);
+
+                // modify in orders
+                if (order_list.isPresent()){
+                    for (Order o : order_list.get()){
+                        if (o.getBusiness().getId().equals(business.getId())){
+                            o.updateValuesBusiness(business);
+                        }
+                    }
+                }
             }
 
             // changed rating for an already reviewed business -> change rating
@@ -294,6 +311,9 @@ public class MobileAPI {
                 o.setUser(user);
                 orderRepository.save(o);
             }
+
+
+
 
             j_arr.put(user.toJSON());
         }

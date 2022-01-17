@@ -6,12 +6,11 @@ import lombok.ToString;
 import org.bson.types.ObjectId;
 import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.*;
 
 @Getter
 @Setter
@@ -29,8 +28,12 @@ public class User {
     @Field("apple_id")
     private String appleId;
 
+    @Transient
+    private Map<String, ArrayList<JSONObject>> favouriteProductsToJSON = new HashMap<>();
+
     public User(String appleId){
         this.favouriteProducts = new HashMap<>();
+        // this.favouriteProductsToJSON = new HashMap<>();
         this.ratings = new HashMap<>();
         this.appleId = appleId;
     }
@@ -40,11 +43,40 @@ public class User {
         json.put("id", id);
         json.put("email", email);
         json.put("password", password);
-        json.put("favourite_products", favouriteProducts);
+        // json.put("favourite_products", favouriteProducts);
+
+        for (String key : favouriteProducts.keySet()){
+            favouriteProductsToJSON.put(key, new ArrayList<>());
+        }
+
+        for(String key : favouriteProducts.keySet()){
+            for (Product p : favouriteProducts.get(key)){
+                favouriteProductsToJSON.get(key).add(p.toJSON());
+            }
+        }
+
+        json.put("favourite_products", favouriteProductsToJSON);
+
         json.put("ratings", ratings);
         json.put("apple_id", appleId);
         System.out.println(json);
         return json;
     }
 
+    public void updateValuesFavouriteProduct(Product product, Business business){
+        if (favouriteProducts.containsKey(business.getBusinessName())){
+            for (Product p : favouriteProducts.get(business.getBusinessName())){
+                if (p.getId().equals(product.getId())){
+                    favouriteProducts.get(business.getBusinessName()).remove(p);
+                    favouriteProducts.get(business.getBusinessName()).add(product);
+                }
+            }
+        }
+    }
+
+    public void removeProductFromFavourites(Product product, Business business){
+        if (favouriteProducts.containsKey(business.getBusinessName())){
+            favouriteProducts.get(business.getBusinessName()).removeIf(p -> p.getId().equals(product.getId()));
+        }
+    }
 }
