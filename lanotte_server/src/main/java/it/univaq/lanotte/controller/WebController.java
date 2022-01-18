@@ -164,18 +164,27 @@ public class WebController {
         }
 
         Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
-        List<Order> placedOrders = null;
-        List<Order> preparingOrders = null;
-        List<Order> preparedOrders = null;
+
+        ArrayList<Order> placedOrders = new ArrayList<>();
+        ArrayList<Order> preparingOrders = new ArrayList<>();
+        ArrayList<Order> preparedOrders = new ArrayList<>();
+
         if (order_list.isPresent()) {
-            placedOrders = new ArrayList<>();
-            preparingOrders = new ArrayList<>();
-            preparedOrders = new ArrayList<>();
             for (Order o : order_list.get()) {
+
                 switch (o.getStatus()) {
-                    case placed -> placedOrders.add(o);
-                    case preparing -> preparingOrders.add(o);
-                    case prepared -> preparedOrders.add(o);
+                    case placed -> {
+                        placedOrders.add(o);
+                        o.groupByProductName();
+                    }
+                    case preparing -> {
+                        preparingOrders.add(o);
+                        o.groupByProductName();
+                    }
+                    case prepared -> {
+                        preparedOrders.add(o);
+                        o.groupByProductName();
+                    }
                 }
             }
         }
@@ -183,7 +192,6 @@ public class WebController {
         m.addAttribute("placedOrders", placedOrders);
         m.addAttribute("preparingOrders", preparingOrders);
         m.addAttribute("preparedOrders", preparedOrders);
-
 
         return "index";
     }

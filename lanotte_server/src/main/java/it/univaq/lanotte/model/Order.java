@@ -7,12 +7,12 @@ import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.util.Pair;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Optional;
+import java.util.*;
 
 @Getter
 @Setter
@@ -33,6 +33,9 @@ public class Order {
     @Field("order_status")
     private OrderStatus status;
 
+    @Transient
+    private Map<Product, Integer> productsNameAndQuantity = new HashMap<>();
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         JSONArray prod_list = new JSONArray();
@@ -50,7 +53,6 @@ public class Order {
 
 
     public void updateValuesProduct(Product product){
-
         for (int i=0; i<products.size(); i++){
             if (products.get(i).getId().equals(product.getId())){
                 products.remove(i);
@@ -66,4 +68,29 @@ public class Order {
         this.business.setRating(business.getRating());
     }
 
+    public void groupByProductName(){
+        ArrayList<String> names = new ArrayList<>();
+        Integer counter = 1;
+        for (int i=0; i<this.products.size(); i++){
+            if (!names.contains(this.products.get(i).getName())) {
+                names.add(this.products.get(i).getName());
+                for (int j=i+1; j<this.products.size(); j++){
+                    if (this.products.get(j).getId().equals(this.products.get(i).getId())){
+                        counter += 1;
+                    }
+                }
+                this.productsNameAndQuantity.put(this.products.get(i), counter);
+                counter = 0;
+            }
+        }
+    }
+
+    public Double getTotal(){
+        Double total = 0.0;
+
+        for (Product p : this.products){
+            total += p.getPrice();
+        }
+        return total;
+    }
 }

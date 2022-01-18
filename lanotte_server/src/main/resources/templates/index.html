@@ -365,12 +365,12 @@
                                                             <div class="row no-gutters align-items-center">
                                                                 <div class="col mr-2">
                                                                     <div class="text-xs mb-1" th:text="${order.getDateTime()}"> </div>
-                                                                    <div class="mb-1">
-                                                                        <th:block th:each="product : ${order.getProducts()}">
-                                                                            <div th:text="${product.getName()}">  </div>
+                                                                    <div class="mb-1 text-gray-800">
+                                                                        <th:block th:each="entry : ${order.getProductsNameAndQuantity()}">
+                                                                            <div th:text="${entry.value + 'x  ' + entry.key.getName()}">  </div>
                                                                         </th:block>
                                                                     </div>
-                                                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${numberRating}"> </div>
+                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${order.getTotal()} + '0'"> </div>
                                                                 </div>
                                                                 <div class="col-auto">
                                                                     <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsToPrepare'}" method="post">
@@ -396,10 +396,10 @@
                                 <!-- Card Header - Dropdown -->
                                 <div
                                         class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <div th:if="${preparingOrders == null}">
+                                    <div th:if="${gb_preparingOrders == null}">
                                         <h6 class="m-0 font-weight-bold text-primary" th:text="|Ordini in preparazione: 0|"></h6>
                                     </div>
-                                    <div th:unless="${preparingOrders == null}">
+                                    <div th:unless="${gb_preparingOrders == null}">
                                         <h6 class="m-0 font-weight-bold text-primary" th:text="|Ordini in preparazione: ${preparingOrders.size()}|"></h6>
                                     </div>
 
@@ -419,12 +419,13 @@
                                                             <div class="row no-gutters align-items-center">
                                                                 <div class="col mr-2">
                                                                     <div class="text-xs mb-1" th:text="${order.getDateTime()}"> </div>
-                                                                    <div class="mb-1">
-                                                                        <th:block th:each="product : ${order.getProducts()}">
-                                                                            <div th:text="${product.getName()}">  </div>
+                                                                    <div class="mb-1 text-gray-800">
+                                                                        <th:block th:each="entry : ${order.getProductsNameAndQuantity()}">
+                                                                            <div th:text="${entry.value + 'x  ' + entry.key.getName()}">  </div>
                                                                         </th:block>
+
                                                                     </div>
-                                                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${numberRating}"> </div>
+                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${order.getTotal()}  + '0' "> </div>
                                                                 </div>
                                                                 <div class="col-auto">
                                                                     <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsPrepared'}" method="post">
@@ -466,6 +467,7 @@
                                 <div th:if="${(preparedOrders == null) || (preparedOrders.size() == 0)} " class="ml-3 mt-3">
                                     Non ci sono ordini da ritirare al momento
                                 </div>
+
                                 <div class="overflow-auto">
                                     <div th:unless="${preparedOrders == null}">
                                         <th:block th:each="order : ${preparedOrders}">
@@ -477,12 +479,12 @@
                                                             <div class="row no-gutters align-items-center">
                                                                 <div class="col mr-2">
                                                                     <div class="text-xs mb-1" th:text="${order.getDateTime()}"> </div>
-                                                                    <div class="mb-1">
-                                                                        <th:block th:each="product : ${order.getProducts()}">
-                                                                            <div th:text="${product.getName()}">  </div>
+                                                                    <div class="mb-1 text-gray-800">
+                                                                        <th:block th:each="entry : ${order.getProductsNameAndQuantity()}">
+                                                                            <div th:text="${entry.value + 'x  ' + entry.key.getName()}">  </div>
                                                                         </th:block>
                                                                     </div>
-                                                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${numberRating}"> </div>
+                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${order.getTotal()}  + '0' "> </div>
                                                                 </div>
                                                                 <div class="col-auto">
                                                                     <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsCollected'}" method="post">
