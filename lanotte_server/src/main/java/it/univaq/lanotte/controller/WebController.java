@@ -150,20 +150,18 @@ public class WebController {
     public String index(Model m, HttpSession session) {
         Business business = (Business) session.getAttribute("business");
 
-        // System.out.println("index: " + business);
         m.addAttribute("businessName", business.getBusinessName());
         m.addAttribute("ratingsAvg", business.getRating());
         m.addAttribute("numberRating", business.getNumberRatings());
         m.addAttribute("business", business);
 
-        Optional<List<Order>> ordersForBusiness = orderRepository.findByBusiness(business);
-        if (ordersForBusiness.isPresent()) {
-            m.addAttribute("numberOfOrders", ordersForBusiness.get().size());
+        Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+
+        if (order_list.isPresent()) {
+            m.addAttribute("numberOfOrders", order_list.get().size());
         } else {
             m.addAttribute("numberOfOrders", 0);
         }
-
-        Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
 
         ArrayList<Order> placedOrders = new ArrayList<>();
         ArrayList<Order> preparingOrders = new ArrayList<>();
@@ -171,7 +169,6 @@ public class WebController {
 
         if (order_list.isPresent()) {
             for (Order o : order_list.get()) {
-
                 switch (o.getStatus()) {
                     case placed -> {
                         placedOrders.add(o);
@@ -253,23 +250,23 @@ public class WebController {
             pageToReturn = "addProduct";
         }
         else {
+
+            Product savedProduct = productRepository.save(product);
+
             // save orders for "old" business
             Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
-            business.addProductToMenu(product);
+            business.addProductToMenu(savedProduct);
+            // update business
+            businessRepository.save(business);
+
             if (order_list.isPresent()){
                 for (Order o : order_list.get()){
-                    o.updateValuesBusiness(business);
+                    o.setBusiness(business);
                     orderRepository.save(o);
                 }
             }
 
-            productRepository.save(product);
-
-            // update business
-            businessRepository.save(business);
-
             // update stored value in session
-            session.removeAttribute("business");
             session.setAttribute("business", business);
 
             m.addAttribute("businessName", business.getBusinessName());
@@ -314,6 +311,9 @@ public class WebController {
 
             Optional<Product> productToBeRemoved = productRepository.findById(id);
 
+            // save orders for "old" business
+            Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+
             // update products' list in business object
             business.removeProductFromMenu(productToBeRemoved.get());
             productRepository.deleteById(id);
@@ -325,6 +325,14 @@ public class WebController {
             for (User u : user_list){
                 u.removeProductFromFavourites(productToBeRemoved.get(), business);
                 userRepository.save(u);
+            }
+
+            // update old orders for business
+            if (order_list.isPresent()){
+                for (Order o : order_list.get()){
+                    o.setBusiness(business);
+                    orderRepository.save(o);
+                }
             }
 
             m.addAttribute("businessName", business.getBusinessName());
@@ -383,7 +391,7 @@ public class WebController {
             pageToReturn = "modProduct";
         }
         else{
-            System.out.println("NEW INGREDIENTS" + new_ingredients);
+            // System.out.println("NEW INGREDIENTS" + new_ingredients);
             while (new_ingredients.contains("")){
                 new_ingredients.remove("");
             }
@@ -483,6 +491,10 @@ public class WebController {
                 }
                 // no errors
                 else{
+
+                    // save business' orders
+                    Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
+
                     modifiedBusiness.setOpeningHoures(new HashMap<>());
                     modifiedBusiness.initOpeningHoures();
                     modifiedBusiness.setOpeningHour("0", lun.get(0));
@@ -513,6 +525,7 @@ public class WebController {
                     business.setCity(modifiedBusiness.getCity());
                     business.setCAP(modifiedBusiness.getCAP());
                     business.setLocation(modifiedBusiness.getLocation());
+                    business.setOpeningHoures(modifiedBusiness.getOpeningHoures());
                     if (!(image.getOriginalFilename().contentEquals(""))) {
                         business.setImage(image.getBytes());
                     }
@@ -521,6 +534,14 @@ public class WebController {
                     businessRepository.save(business);
                     session.removeAttribute("business");
                     session.setAttribute("business", business);
+
+                    // update business' orders as well
+                    if (orderList.isPresent()){
+                        for (Order o : orderList.get()){
+                            o.setBusiness(business);
+                            orderRepository.save(o);
+                        }
+                    }
 
                     m.addAttribute("business", business);
                 }
@@ -589,6 +610,26 @@ public class WebController {
             orderRepository.save(orderToPrepare.get());
         }
 
+        return pageToReturn;
+    }
+
+    @RequestMapping({"orders"})
+    public String orders(Model m, HttpSession session) {
+
+        String pageToReturn = "orders";
+
+        if (session.getAttribute("business") == null) {
+            pageToReturn = "redirect:/login";
+        }
+
+        Business business = (Business) session.getAttribute("business");
+
+        Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
+
+        if (orderList.isPresent()){
+            m.addAttribute("orders", orderList.get());
+        }
+        m.addAttribute("businessName", business.getBusinessName());
         return pageToReturn;
     }
 

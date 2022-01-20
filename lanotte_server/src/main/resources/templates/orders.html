@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>L'Anotte - Modifica prodotto</title>
+    <title>L'Anotte - Visualizza il menù</title>
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -22,6 +22,9 @@
 
     <!-- Added scripts for all pages-->
     <script src="functions/utilities.js"></script>
+
+    <!-- Custom styles for this page -->
+    <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 
 </head>
 
@@ -42,7 +45,7 @@
             <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <li class="nav-item ">
                 <a class="nav-link" href="index">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Dashboard</span></a>
@@ -52,7 +55,7 @@
             <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Menu -->
-            <li class="nav-item active">
+            <li class="nav-item">
                 <a class="nav-link" href="menu">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Gestisci menù</span></a>
@@ -62,7 +65,7 @@
             <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Storico ordini -->
-            <li class="nav-item">
+            <li class="nav-item active">
                 <a class="nav-link" href="orders">
                     <i class="fas fa-fw fa-folder"></i>
                     <span>Storico ordini</span></a>
@@ -250,7 +253,7 @@
                             <!-- Dropdown - Business Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="businessProfile">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Profile
                                 </a>
@@ -282,100 +285,83 @@
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">Modifica prodotto</h1>
+                    <h1 class="h3 mb-2 text-gray-800">Storico ordini</h1>
+
+                    <div th:if="${orders.isEmpty()}">
+                        Non ci sono ancora ordini effettuatu su L'Anotte per la tua attività.
                     </div>
 
-
-
-                    <form class="user" enctype="multipart/form-data" th:action="@{'/applyChangesProduct'}" method="post" th:object="${product}">
-
-                        <div class="mb-3">
-                            <label for="file" class="form-label">Seleziona una nuova immagine</label>
-                            <input class="form-control" type="file" name="file" id="file">
-                        </div>
-
-                             <input type="hidden" id="productId" th:field="*{id}">
-                             <input type="hidden" id="productImage" th:field="*{image}">
-
-
-                             <div class="form-group">
-                                 <input type="text" class="form-control"
-                                        id="productName" placeholder="Nome prodotto" required th:field="*{name}" th:value="${product.getName()}">
-                             </div>
-
-
-                         <div class="alert-danger text-center rounded form-group" th:if="${product_name_error}">
-                            Esiste già un prodotto con questo nome nel menù.
-                        </div>
-
-                        <div class="form-group">
-                            <input type="text" class="form-control"
-                                   placeholder="Categoria" required th:field="*{category}" th:value="${product.getCategory()}"
-                                   data-toggle="tooltip" data-placement="top" title="Esempio: long drink, vino, birra...">
-                        </div>
-
-                        <div class="form-group">
-                            <input type="number" class="form-control"
-                                   placeholder="Prezzo in €" required th:field="*{price}" th:value="${product.getPrice()}">
-                        </div>
-
-                        <button class="btn btn-secondary mb-2" id="anotherIngredient" type="button" onclick="addIngredientFieldMod()">
-                            Inserisci un altro ingrediente
-                        </button>
-
-                    <!-- Begin Ingredients section -->
-                        <div id="parentParentNode">
-                            <th:block th:each="ing : ${product.getIngredients()}">
-                                <div class="form-group" id="ingredientsContainerParentNode">
-                                    <div class="form-group">
-                                        <input type="text" class="form-control" onkeyup="return forceLower(this);"
-                                               name="ingredient" placeholder="Ingrediente" th:value="${ing}">
-                                    </div>
-                                </div>
-                            </th:block>
-                        </div>
-
-                    <!-- Begin Stamps section -->
-                        <div class="form-group">
-                            <div class="form-check form-check-inline">
-                                <span th:if="${product.getStamps().contains('vegan')}">
-                                    <input class="form-check-input " type="checkbox" id="veganCheckBox1" value="vegan" th:field="*{stamps}" checked>
-                                    <label class="form-check-label" for="veganCheckBox1">
-                                        Vegan
-                                    </label>
-                                </span>
-
-                                <span th:unless="${product.getStamps().contains('vegan')}">
-                                    <input class="form-check-input" type="checkbox" id="veganCheckBox2" value="vegan" th:field="*{stamps}">
-                                    <label class="form-check-label" for="veganCheckBox2">
-                                        Vegan
-                                    </label>
-                                </span>
+                    <div th:if="${!orders.isEmpty()}">
+                        <!-- DataTales Example -->
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Ordini effettuati su L'Anotte</h6>
                             </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="dataTable">
+                                        <thead>
+                                        <tr>
+                                            <th>Data ordine</th>
+                                            <th>Nome prodotti</th>
+                                            <th>Prezzi in €</th>
+                                            <th>Totale in € </th>
+                                            <th>Stato ordine</th>
+                                        </tr>
+                                        </thead>
+                                        <tfoot>
+                                        <tr>
+                                            <th>Data ordine</th>
+                                            <th>Nome prodotti</th>
+                                            <th>Prezzi in €</th>
+                                            <th>Totale in € </th>
+                                            <th>Stato ordine</th>
+                                        </tr>
+                                        </tfoot>
+                                        <tbody>
 
-                                <div class="form-check form-check-inline">
-                                    <span th:if="${product.getStamps().contains('gluten free')}">
-                                        <input class="form-check-input" type="checkbox" id="glutenFreeCheckBox1" value="gluten free" th:field="*{stamps}" checked>
-                                        <label class="form-check-label" for="glutenFreeCheckBox1">
-                                            Gluten free
-                                        </label>
-                                    </span>
+                                        <th:block th:each="o : ${orders}">
+                                            <tr>
+                                                <td th:text="${o.getDateTime()}"></td>
+                                                <td>
+                                                    <div th:each="product : ${o.getProducts()}">
+                                                        <div th:text="${product.getName()}"> </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div th:each="product : ${o.getProducts()}">
 
-                                    <span th:unless="${product.getStamps().contains('gluten free')}">
-                                        <input class="form-check-input" type="checkbox" id="glutenFreeCheckBox2" value="gluten free" th:field="*{stamps}">
-                                        <label class="form-check-label" for="glutenFreeCheckBox2">
-                                            Gluten free
-                                        </label>
-                                    </span>
+                                                        <div th:text="${#numbers.formatDecimal(product.getPrice(), 0, 2)}"> </div>
+
+                                                    </div>
+                                                </td>
+                                                <td th:text="${#numbers.formatDecimal(o.getTotal(), 0, 2)}"></td>
+
+                                                <td>
+                                                    <div th:if='${o.getStatus().name().equals("placed")}'>
+                                                        Da preparare
+                                                    </div>
+                                                    <div th:if='${o.getStatus().name().equals("preparing")}'>
+                                                        In preparazione
+                                                    </div>
+                                                    <div th:if='${o.getStatus().name().equals("prepared")}'>
+                                                        Preparato
+                                                    </div>
+                                                    <div th:if='${o.getStatus().name().equals("collected")}'>
+                                                        Ritirato
+                                                    </div>
+                                                </td>
+
+
+                                            </tr>
+                                        </th:block>
+
+                                        </tbody>
+                                    </table>
                                 </div>
-
+                            </div>
                         </div>
-
-                        <button class="btn btn-primary btn-user btn-block" type="submit">
-                            Modifica prodotto
-                        </button>
-                    </form>
+                    </div>
 
 
                 </div>
@@ -425,12 +411,6 @@
         </div>
     </div>
 
-    <div hidden>
-        <div class="form-group" id="ingredientsContainer">
-            <input type="text" class="form-control" onkeyup="return forceLower(this);"
-                   name="ingredient" placeholder="Ingrediente">
-        </div>
-    </div>
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -443,17 +423,11 @@
     <script src="js/sb-admin-2.min.js"></script>
 
     <!-- Page level plugins -->
-    <script src="vendor/chart.js/Chart.min.js"></script>
+    <script src="vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Page level custom scripts -->
-    <script src="js/demo/chart-area-demo.js"></script>
-    <script src="js/demo/chart-pie-demo.js"></script>
-
-    <script>
-    function forceLower(strInput) {
-        strInput.value = strInput.value.toLowerCase();
-    }
-    </script>
+    <script src="js/demo/datatables-demo.js"></script>
 
 </body>
 

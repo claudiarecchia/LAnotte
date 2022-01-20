@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
+    <meta http-equiv="refresh" content="60">
 
     <title>L'Anotte - Dashboard</title>
 
@@ -48,11 +49,21 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Charts -->
+            <!-- Nav Item - Menu -->
             <li class="nav-item">
                 <a class="nav-link" href="menu">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Gestisci menù</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Storico ordini -->
+            <li class="nav-item">
+                <a class="nav-link" href="orders">
+                    <i class="fas fa-fw fa-folder"></i>
+                    <span>Storico ordini</span></a>
             </li>
 
             <!-- Divider -->
@@ -370,7 +381,7 @@
                                                                             <div th:text="${entry.value + 'x  ' + entry.key.getName()}">  </div>
                                                                         </th:block>
                                                                     </div>
-                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${order.getTotal()} + '0'"> </div>
+                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${#numbers.formatDecimal(order.getTotal(), 0, 2)}"> </div>
                                                                 </div>
                                                                 <div class="col-auto">
                                                                     <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsToPrepare'}" method="post">
@@ -396,13 +407,12 @@
                                 <!-- Card Header - Dropdown -->
                                 <div
                                         class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <div th:if="${gb_preparingOrders == null}">
+                                    <div th:if="${preparingOrders == null}">
                                         <h6 class="m-0 font-weight-bold text-primary" th:text="|Ordini in preparazione: 0|"></h6>
                                     </div>
-                                    <div th:unless="${gb_preparingOrders == null}">
+                                    <div th:unless="${preparingOrders == null}">
                                         <h6 class="m-0 font-weight-bold text-primary" th:text="|Ordini in preparazione: ${preparingOrders.size()}|"></h6>
                                     </div>
-
                                 </div>
                                 <div th:if="${preparingOrders == null || (preparingOrders.size() == 0)}" class="ml-3 mt-3">
                                     Non ci sono ordini in preparazione al momento
@@ -425,7 +435,7 @@
                                                                         </th:block>
 
                                                                     </div>
-                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${order.getTotal()}  + '0' "> </div>
+                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${#numbers.formatDecimal(order.getTotal(), 0, 2)}"> </div>
                                                                 </div>
                                                                 <div class="col-auto">
                                                                     <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsPrepared'}" method="post">
@@ -484,7 +494,7 @@
                                                                             <div th:text="${entry.value + 'x  ' + entry.key.getName()}">  </div>
                                                                         </th:block>
                                                                     </div>
-                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${order.getTotal()}  + '0' "> </div>
+                                                                    <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${#numbers.formatDecimal(order.getTotal(), 0, 2)}"> </div>
                                                                 </div>
                                                                 <div class="col-auto">
                                                                     <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsCollected'}" method="post">

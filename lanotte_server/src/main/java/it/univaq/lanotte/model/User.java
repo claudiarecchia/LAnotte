@@ -43,7 +43,6 @@ public class User {
         json.put("id", id);
         json.put("email", email);
         json.put("password", password);
-        // json.put("favourite_products", favouriteProducts);
 
         for (String key : favouriteProducts.keySet()){
             favouriteProductsToJSON.put(key, new ArrayList<>());
@@ -54,12 +53,9 @@ public class User {
                 favouriteProductsToJSON.get(key).add(p.toJSON());
             }
         }
-
         json.put("favourite_products", favouriteProductsToJSON);
-
         json.put("ratings", ratings);
         json.put("apple_id", appleId);
-        System.out.println(json);
         return json;
     }
 

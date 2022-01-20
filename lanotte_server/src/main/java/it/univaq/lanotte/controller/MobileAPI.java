@@ -67,7 +67,7 @@ public class MobileAPI {
 
         try{
             JSONObject body = new JSONObject(requestBody);
-            System.out.println(body);
+            // System.out.println(body);
 
             JSONObject business1 = body.getJSONObject("business");
             Optional<Business> business = businessRepository.findByBusinessName(business1.getString("business_name"));
@@ -92,9 +92,9 @@ public class MobileAPI {
 
                 Optional<User> user = userRepository.findByAppleId(user1.getString("apple_id"));
                 // System.out.println(user);
-                System.out.println("utente presente");
+                // System.out.println("utente presente");
                 order.setUser(user.get());
-                System.out.println(order.getUser().getId());
+                // System.out.println(order.getUser().getId());
             }
 
 //            else {
@@ -122,18 +122,17 @@ public class MobileAPI {
 
         try {
             JSONObject body = new JSONObject(requestBody);
-            System.out.println("BODY " + body);
+            // System.out.println("BODY " + body);
 
             Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
             User user = user_opt.get();
-            System.out.println(user);
+            // System.out.println(user);
             List<Order> orders = orderRepository.findAllByUserOrderByIdDesc(user);
 
             for (Order o : orders)
                 j_arr.put(o.toJSON());
         }
         catch (JSONException e) { }
-        System.out.println(j_arr);
         return j_arr.toString();
     }
 
@@ -165,7 +164,7 @@ public class MobileAPI {
 
         try {
             JSONObject body = new JSONObject(requestBody);
-            System.out.println(body);
+            // System.out.println(body);
             Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
 
             // already present user in the db
@@ -182,8 +181,6 @@ public class MobileAPI {
             }
         }
         catch (JSONException e) { }
-
-        System.out.println("IMHERE " + j_arr);
 
         return j_arr.toString();
     }

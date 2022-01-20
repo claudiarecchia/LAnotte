@@ -44,7 +44,7 @@
             <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <li class="nav-item ">
                 <a class="nav-link" href="index">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Dashboard</span></a>
@@ -53,7 +53,7 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Charts -->
+            <!-- Nav Item - Menu -->
             <li class="nav-item active">
                 <a class="nav-link" href="menu">
                     <i class="fas fa-fw fa-cog"></i>
@@ -61,8 +61,17 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
+            <hr class="sidebar-divider my-0">
 
+            <!-- Nav Item - Storico ordini -->
+            <li class="nav-item">
+                <a class="nav-link" href="orders">
+                    <i class="fas fa-fw fa-folder"></i>
+                    <span>Storico ordini</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
             <!-- Sidebar Toggler (Sidebar) -->
             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
@@ -323,7 +332,7 @@
                                             <tr>
                                                 <td th:text="${p.getName()}"></td>
                                                 <td th:text="${p.getCategory()}"></td>
-                                                <td th:text="${p.getPrice()}"></td>
+                                                <td th:text="${#numbers.formatDecimal(p.getPrice(), 0, 2)}"></td>
                                                 <td th:text="${p.getIngredientsNames()}"></td>
                                                 <td>
                                                     <span th:if="${p.getStamps().contains('vegan')}">Sì</span>

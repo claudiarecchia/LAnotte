@@ -42,12 +42,19 @@ public class Order {
         json.put("id", id);
         json.put("date_time", dateTime);
 //        json.put("estimated_hour", estimatedHour);
-//        json.put("state", state);
         for (Product p : products)
             prod_list.put(p.toJSON());
         json.put("products", prod_list);
         json.put("business", business.toJSON());
         json.put("user", user.toJSON());
+
+        switch (status) {
+            case placed -> json.put("order_status", "inviato");
+            case preparing -> json.put("order_status", "in preparazione");
+            case prepared -> json.put("order_status", "pronto per il ritiro");
+            case collected ->  json.put("order_status", "ritirato");
+        }
+
         return json;
     }
 
