@@ -32,6 +32,10 @@ public class Order {
     private User user;
     @Field("order_status")
     private OrderStatus status;
+    @Field("device_token")
+    private String deviceToken;
+    @Field("code_to_collect")
+    private String codeToCollect;
 
     @Transient
     private Map<Product, Integer> productsNameAndQuantity = new HashMap<>();
@@ -47,6 +51,8 @@ public class Order {
         json.put("products", prod_list);
         json.put("business", business.toJSON());
         json.put("user", user.toJSON());
+        json.put("code_to_collect", codeToCollect);
+
 
         switch (status) {
             case placed -> json.put("order_status", "inviato");

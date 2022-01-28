@@ -1,67 +1,35 @@
 package it.univaq.lanotte;
 
-import it.univaq.lanotte.model.Business;
-import it.univaq.lanotte.model.Product;
-import it.univaq.lanotte.model.User;
-import it.univaq.lanotte.repository.BusinessRepository;
-import it.univaq.lanotte.repository.ProductRepository;
-import it.univaq.lanotte.repository.UserRepository;
-import org.json.JSONArray;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.RestController;
-import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
 @SpringBootApplication
 @RestController
 public class LanotteApplication {
 
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    ProductRepository productRepository;
-
-    @Autowired
-    BusinessRepository businessRepository;
-
     public static void main(String[] args) {
         SpringApplication.run(LanotteApplication.class, args);
     }
 
-    @GetMapping("/hello")
-    public String sayHello() {
-        User user = userRepository.findByEmail("claudiarecchia97@gmail.com");
-        return user.toString();
+    @Bean
+    FirebaseMessaging firebaseMessaging() throws IOException {
+        GoogleCredentials googleCredentials = GoogleCredentials
+                .fromStream(new ClassPathResource("firebase-service-account.json").getInputStream());
+        FirebaseOptions firebaseOptions = FirebaseOptions
+                .builder()
+                .setCredentials(googleCredentials)
+                .build();
+        FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "l-anotte");
+        return FirebaseMessaging.getInstance(app);
     }
-
-    @GetMapping("/drink")
-    @ResponseBody
-    public String drink() {
-        JSONArray j_arr = new JSONArray();
-        // JSONObject obj = new JSONObject();
-        Product p = productRepository.findByName("moscow mule");
-        // obj = p.toJSON();
-        j_arr.put(p.toJSON());
-        j_arr.put(p.toJSON());
-        j_arr.put(p.toJSON());
-        return j_arr.toString();
-    }
-
-    @GetMapping("/allBusiness")
-    public String businesses() {
-        List<Business> business_list = businessRepository.findAll();
-        return business_list.toString();
-    }
-
 
 }

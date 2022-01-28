@@ -20,6 +20,10 @@
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
 
+
+    <link rel="stylesheet" type="text/css" th:href="@{/vendor/fontawesome-free/css/all.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/sb-admin-2.min.css}" />
+
 </head>
 
 <body class="bg-gradient-primary">
@@ -60,14 +64,11 @@
                                             La password non è corretta.
                                         </div>
 
-                                        <button class="btn btn-primary btn-user btn-block" type="submit">
+                                        <button class="btn btn-primary btn-user btn-block" type="submit" name="submit">
                                             Login
                                         </button>
                                     </form>
                                     <hr>
-                                    <div class="text-center">
-                                        <a class="small" href="forgot-password.html">Hai dimenticato la Password?</a>
-                                    </div>
                                     <div class="text-center">
                                         <a class="small" href="businessRegistration">Non hai ancora un account per la tua azienda? Effettua la registrazione!</a>
                                     </div>
@@ -83,6 +84,11 @@
 
     </div>
 
+    <script th:src="@{/vendor/jquery/jquery.min.js}"></script>
+    <script th:src="@{/vendor/bootstrap/js/bootstrap.bundle.min.js}" ></script>
+    <script th:src="@{/vendor/jquery-easing/jquery.easing.min.js}"></script>
+    <script th:src="@{/js/sb-admin-2.min.js}"></script>
+
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -92,6 +98,9 @@
 
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
+
+
+
 
 </body>
 

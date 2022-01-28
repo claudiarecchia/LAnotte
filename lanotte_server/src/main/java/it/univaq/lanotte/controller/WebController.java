@@ -1,18 +1,34 @@
 package it.univaq.lanotte.controller;
 
 
+import com.google.firebase.messaging.FirebaseMessagingException;
 import it.univaq.lanotte.Encryption;
 import it.univaq.lanotte.model.*;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.OrderRepository;
 import it.univaq.lanotte.repository.ProductRepository;
 import it.univaq.lanotte.repository.UserRepository;
+import it.univaq.lanotte.services.FirebaseMessagingService;
+import it.univaq.lanotte.services.RandomNumbers;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+//import org.springframework.security.core.Authentication;
+//import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ViewResolver;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.web.servlet.view.JstlView;
 
 import javax.servlet.http.HttpSession;
 import javax.swing.text.html.Option;
@@ -23,7 +39,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 @Controller
-@RequestMapping({""})
+@RequestMapping("")
 public class WebController {
 
     @Autowired
@@ -38,17 +54,10 @@ public class WebController {
     @Autowired
     OrderRepository orderRepository;
 
-//    @RequestMapping({"home", "/", "dashboard"})
-//    public String home(Model m, HttpSession session) {
-//        Business business = (Business) session.getAttribute("session");
-//        m.addAttribute("business", business);
-//
-//        String toReturn = "index";
-//
-//        return toReturn;
-//    }
+    @Autowired
+    FirebaseMessagingService firebaseMessagingService;
 
-    @RequestMapping({"businessRegistration"})
+    @RequestMapping("businessRegistration")
     public String businessRegistration(Model m, HttpSession session) {
         m.addAttribute("business", new Business());
         m.addAttribute("businessName");
@@ -71,10 +80,7 @@ public class WebController {
         String pageToReturn = "index";
 
         Optional<Business> existingBusiness = businessRepository.findByBusinessName(business.getBusinessName());
-        // System.out.println(existingBusiness.toString());
-
         Optional<Business> existingBusinessByVATNumber = businessRepository.findByVATNumber(business.getVATNumber());
-        // System.out.println(existingBusinessByVATNumber.toString());
 
         // if in db there not exists a business with the same name
         // then the Business can be created
@@ -105,8 +111,9 @@ public class WebController {
         return pageToReturn;
     }
 
+
     @RequestMapping({"businessLogin"})
-    public String login(Model m, HttpSession session) {
+    public String login(Model m) {
         m.addAttribute("business", new Business());
         m.addAttribute("businessName");
         m.addAttribute("password");
@@ -128,8 +135,6 @@ public class WebController {
             if (status){
                 // login successful -- save business in session
                 session.setAttribute("business", business_opt.get());
-
-                // System.out.println(session.getAttribute("business"));
             }
             // name is present but password does not match
             else{
@@ -142,50 +147,63 @@ public class WebController {
             m.addAttribute("business_name_error", true);
             pageToReturn = "login";
         }
-
         return pageToReturn;
     }
 
     @RequestMapping({"index", "/"})
     public String index(Model m, HttpSession session) {
-        Business business = (Business) session.getAttribute("business");
 
-        m.addAttribute("businessName", business.getBusinessName());
-        m.addAttribute("ratingsAvg", business.getRating());
-        m.addAttribute("numberRating", business.getNumberRatings());
-        m.addAttribute("business", business);
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
-        Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String loggedUser = auth.getName();
+        System.out.println(loggedUser);
 
-        if (order_list.isPresent()) {
-            m.addAttribute("numberOfOrders", order_list.get().size());
-        } else {
-            m.addAttribute("numberOfOrders", 0);
-        }
+        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
 
-        ArrayList<Order> placedOrders = new ArrayList<>();
-        ArrayList<Order> preparingOrders = new ArrayList<>();
-        ArrayList<Order> preparedOrders = new ArrayList<>();
+        // Business business = (Business) session.getAttribute("business");
+        ArrayList<Order> placedOrders = null;
+        ArrayList<Order> preparingOrders = null;
+        ArrayList<Order> preparedOrders = null;
+        if (business_opt.isPresent()) {
+            Business business = business_opt.get();
 
-        if (order_list.isPresent()) {
-            for (Order o : order_list.get()) {
-                switch (o.getStatus()) {
-                    case placed -> {
-                        placedOrders.add(o);
-                        o.groupByProductName();
-                    }
-                    case preparing -> {
-                        preparingOrders.add(o);
-                        o.groupByProductName();
-                    }
-                    case prepared -> {
-                        preparedOrders.add(o);
-                        o.groupByProductName();
+            m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("ratingsAvg", business.getRating());
+            m.addAttribute("numberRating", business.getNumberRatings());
+            m.addAttribute("business", business);
+
+            Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+
+            if (order_list.isPresent()) {
+                m.addAttribute("numberOfOrders", order_list.get().size());
+            } else {
+                m.addAttribute("numberOfOrders", 0);
+            }
+
+            placedOrders = new ArrayList<>();
+            preparingOrders = new ArrayList<>();
+            preparedOrders = new ArrayList<>();
+
+            if (order_list.isPresent()) {
+                for (Order o : order_list.get()) {
+                    switch (o.getStatus()) {
+                        case placed -> {
+                            placedOrders.add(o);
+                            o.groupByProductName();
+                        }
+                        case preparing -> {
+                            preparingOrders.add(o);
+                            o.groupByProductName();
+                        }
+                        case prepared -> {
+                            preparedOrders.add(o);
+                            o.groupByProductName();
+                        }
                     }
                 }
             }
         }
-
         m.addAttribute("placedOrders", placedOrders);
         m.addAttribute("preparingOrders", preparingOrders);
         m.addAttribute("preparedOrders", preparedOrders);
@@ -211,6 +229,7 @@ public class WebController {
 
             Business business = (Business) session.getAttribute("business");
             m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("business", business);
 
             m.addAttribute("product", new Product());
             m.addAttribute("product_name_error", false);
@@ -286,6 +305,7 @@ public class WebController {
 
             Business business = (Business) session.getAttribute("business");
             m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("business", business);
 
             List<Product> product_list = business.getProducts();
             m.addAttribute("products", product_list);
@@ -360,7 +380,7 @@ public class WebController {
         if (productToModify.isPresent()) {
             Product prod = productToModify.get();
 
-            m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("business", business);
             m.addAttribute("product", prod);
             m.addAttribute("new_ingredients", new ArrayList<String>());
             m.addAttribute("product_name_error", false);
@@ -552,7 +572,7 @@ public class WebController {
 
     @RequestMapping(value = "/signAsPrepared", method = RequestMethod.POST)
     public String signAsPrepared(@RequestParam(value="prepared") String id,
-                                Model m, HttpSession session) {
+                                Model m, HttpSession session) throws FirebaseMessagingException {
 
         String pageToReturn = "redirect:/index";
 
@@ -565,7 +585,16 @@ public class WebController {
         Optional<Order> preparedOrder = orderRepository.findById(id);
         if (preparedOrder.isPresent()){
             preparedOrder.get().setStatus(OrderStatus.prepared);
+
+            // generate number to collect the order
+            String randomValue = RandomNumbers.getRandomNumberString();
+            preparedOrder.get().setCodeToCollect(randomValue);
             orderRepository.save(preparedOrder.get());
+
+            // notify to the user
+            firebaseMessagingService.sendPreparedOrderNotification(preparedOrder.get().getDeviceToken(),
+                    randomValue,
+                    preparedOrder.get().getBusiness().getBusinessName());
         }
 
         return pageToReturn;
@@ -594,7 +623,7 @@ public class WebController {
 
     @RequestMapping(value = "/signAsCollected", method = RequestMethod.POST)
     public String signAsCollected(@RequestParam(value="toCollect") String id,
-                                Model m, HttpSession session) {
+                                Model m, HttpSession session) throws FirebaseMessagingException {
 
         String pageToReturn = "redirect:/index";
 
@@ -604,10 +633,15 @@ public class WebController {
 
         Business business = (Business) session.getAttribute("business");
 
-        Optional<Order> orderToPrepare = orderRepository.findById(id);
-        if (orderToPrepare.isPresent()){
-            orderToPrepare.get().setStatus(OrderStatus.collected);
-            orderRepository.save(orderToPrepare.get());
+        Optional<Order> collectedOrder = orderRepository.findById(id);
+        if (collectedOrder.isPresent()){
+            collectedOrder.get().setStatus(OrderStatus.collected);
+            orderRepository.save(collectedOrder.get());
+
+            // notify to the user
+            firebaseMessagingService.sendCollectedOrderNotification(collectedOrder.get().getDeviceToken(),
+                    collectedOrder.get().getBusiness().getBusinessName());
+
         }
 
         return pageToReturn;
@@ -630,6 +664,7 @@ public class WebController {
             m.addAttribute("orders", orderList.get());
         }
         m.addAttribute("businessName", business.getBusinessName());
+        m.addAttribute("business", business);
         return pageToReturn;
     }
 

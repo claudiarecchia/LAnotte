@@ -6,11 +6,15 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import it.univaq.lanotte.model.*;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.OrderRepository;
 import it.univaq.lanotte.repository.ProductRepository;
 import it.univaq.lanotte.repository.UserRepository;
+import it.univaq.lanotte.services.FirebaseMessagingService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,9 +53,13 @@ public class MobileAPI {
 
     @GetMapping("/allBusinesses")
     @ResponseBody
-    public String businesses() {
+    public String businesses() throws FirebaseMessagingException {
         JSONArray j_arr = new JSONArray();
         List<Business> business_list = businessRepository.findAll();
+
+        // prova notifiche
+        // firebaseMessagingService.sendNotification("ckikeP5ls0RJn8g3w8e3w9:APA91bFIj46i7OC8RrFsiIUVgQs-NRABFKaR_Fx_LeLLrMvetYl8e0X759rzl0_49d1hCZs3b1vy1KlGKCM76B7KmMW5GWrUC7ARlqXYkBeaM-nSULZJEQdAIQlMUrHSVOFo8hOcv0Zh");
+
         for(Business bus: business_list)
             j_arr.put(bus.toJSON());
 
@@ -60,10 +68,12 @@ public class MobileAPI {
 
     @PostMapping("/placeOrder")
     @ResponseBody
-    public String placeOrder(@RequestBody String requestBody){
+    public String placeOrder(@RequestBody String requestBody, @RequestHeader("authorization") String token){
         JSONArray j_arr = new JSONArray();
         ArrayList<Product> product_list = new ArrayList<>();
         Order order = new Order();
+
+        System.out.println("TOKEN: " + token);
 
         try{
             JSONObject body = new JSONObject(requestBody);
@@ -78,12 +88,13 @@ public class MobileAPI {
             for (int i=0; i< products.length(); i++){
                 JSONObject product = products.getJSONObject(i);
                 product_list.add(productRepository.findById(product.getString("id")).get());
-                // System.out.println(product);
             }
             order.setProducts(product_list);
 
-            // set the status
+            // set status, token and empty code to collect
             order.setStatus(OrderStatus.placed);
+            order.setDeviceToken(token);
+            order.setCodeToCollect("");
 
             // if there is no user listed, then the user is a guest
             // so, we save a new empty user in the db and we get back the generated User

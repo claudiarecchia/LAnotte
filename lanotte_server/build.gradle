@@ -22,7 +22,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    // implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.projectlombok:lombok'
@@ -31,6 +31,8 @@ dependencies {
     implementation 'org.json:json:20171018'
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'com.google.guava:guava:31.0.1-jre'
+    implementation 'com.google.firebase:firebase-admin:7.0.0'
+
 }
 
 test {
