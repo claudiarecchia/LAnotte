@@ -16,8 +16,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -150,75 +153,92 @@ public class WebController {
         return pageToReturn;
     }
 
-    @RequestMapping({"index", "/"})
+    @PreAuthorize("hasRole('BUSINESS')")
+    @RequestMapping({"businessDashboard", "/"})
     public String index(Model m, HttpSession session) {
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        String pageToReturn = "index";
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String loggedUser = auth.getName();
-        System.out.println(loggedUser);
+        // if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            System.out.println("PRINCIPAL: " + SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
-        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+            // System.out.println("PRINCIPAL: " + SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof UserDetails );
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String loggedUser = auth.getName();
+            String role = String.valueOf(auth.getAuthorities());
+            System.out.println("ROLES: " + role);
+            System.out.println("LOGGED USER: " + loggedUser);
 
-        // Business business = (Business) session.getAttribute("business");
-        ArrayList<Order> placedOrders = null;
-        ArrayList<Order> preparingOrders = null;
-        ArrayList<Order> preparedOrders = null;
-        if (business_opt.isPresent()) {
-            Business business = business_opt.get();
+            Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
 
-            m.addAttribute("businessName", business.getBusinessName());
-            m.addAttribute("ratingsAvg", business.getRating());
-            m.addAttribute("numberRating", business.getNumberRatings());
-            m.addAttribute("business", business);
+            // Business business = (Business) session.getAttribute("business");
+            ArrayList<Order> placedOrders = null;
+            ArrayList<Order> preparingOrders = null;
+            ArrayList<Order> preparedOrders = null;
+            if (business_opt.isPresent()) {
+                Business business = business_opt.get();
 
-            Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+                m.addAttribute("businessName", business.getBusinessName());
+                m.addAttribute("ratingsAvg", business.getRating());
+                m.addAttribute("numberRating", business.getNumberRatings());
+                m.addAttribute("business", business);
 
-            if (order_list.isPresent()) {
-                m.addAttribute("numberOfOrders", order_list.get().size());
-            } else {
-                m.addAttribute("numberOfOrders", 0);
-            }
+                Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
 
-            placedOrders = new ArrayList<>();
-            preparingOrders = new ArrayList<>();
-            preparedOrders = new ArrayList<>();
+                if (order_list.isPresent()) {
+                    m.addAttribute("numberOfOrders", order_list.get().size());
+                } else {
+                    m.addAttribute("numberOfOrders", 0);
+                }
 
-            if (order_list.isPresent()) {
-                for (Order o : order_list.get()) {
-                    switch (o.getStatus()) {
-                        case placed -> {
-                            placedOrders.add(o);
-                            o.groupByProductName();
-                        }
-                        case preparing -> {
-                            preparingOrders.add(o);
-                            o.groupByProductName();
-                        }
-                        case prepared -> {
-                            preparedOrders.add(o);
-                            o.groupByProductName();
+                placedOrders = new ArrayList<>();
+                preparingOrders = new ArrayList<>();
+                preparedOrders = new ArrayList<>();
+
+                if (order_list.isPresent()) {
+                    for (Order o : order_list.get()) {
+                        switch (o.getStatus()) {
+                            case placed -> {
+                                placedOrders.add(o);
+                                o.groupByProductName();
+                            }
+                            case preparing -> {
+                                preparingOrders.add(o);
+                                o.groupByProductName();
+                            }
+                            case prepared -> {
+                                preparedOrders.add(o);
+                                o.groupByProductName();
+                            }
                         }
                     }
                 }
             }
-        }
-        m.addAttribute("placedOrders", placedOrders);
-        m.addAttribute("preparingOrders", preparingOrders);
-        m.addAttribute("preparedOrders", preparedOrders);
 
-        return "index";
+
+            m.addAttribute("placedOrders", placedOrders);
+            m.addAttribute("preparingOrders", preparingOrders);
+            m.addAttribute("preparedOrders", preparedOrders);
+
+//        }
+//
+//        // else not logged user
+//        else{
+//            pageToReturn = "error403";
+//        }
+
+        return pageToReturn;
     }
 
     @RequestMapping({"businessLogout"})
     public String logout(Model m, HttpSession session) {
 
-        session.removeAttribute("business");
+        // session.removeAttribute("business");
 
-        return "redirect:/businessLogin";
+        return "businessLogin";
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "addProduct", method = RequestMethod.GET)
     public String addProduct(Model m, HttpSession session) {
 
@@ -241,7 +261,7 @@ public class WebController {
         return pageToReturn;
     }
 
-
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "addProduct", method = RequestMethod.POST)
     public String addProduct(@ModelAttribute Product product,
                              @RequestParam("file") MultipartFile image,
@@ -295,28 +315,29 @@ public class WebController {
         return pageToReturn;
     }
 
-    @RequestMapping(value = "menu", method = RequestMethod.GET)
+    @PreAuthorize("hasRole('BUSINESS')")
+   @RequestMapping(value = "businessMenu", method = RequestMethod.GET)
     public String menu(Model m, HttpSession session) {
 
         String pageToReturn = "menu";
 
-        // check session value
-        if (session.getAttribute("business") != null) {
+            System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
-            Business business = (Business) session.getAttribute("business");
-            m.addAttribute("businessName", business.getBusinessName());
-            m.addAttribute("business", business);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String loggedUser = auth.getName();
+            Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+            if (business_opt.isPresent()){
+                Business business = business_opt.get();
+                m.addAttribute("businessName", business.getBusinessName());
+                m.addAttribute("business", business);
 
-            List<Product> product_list = business.getProducts();
-            m.addAttribute("products", product_list);
-        }
-        // not logged in --> login
-        else{
-            pageToReturn = "redirect:/login";
-        }
+                List<Product> product_list = business.getProducts();
+                m.addAttribute("products", product_list);
+            }
         return pageToReturn;
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/deleteProduct/{id}")
     public String deleteProduct(@PathVariable String id, Model m, HttpSession session) {
 
@@ -364,6 +385,7 @@ public class WebController {
         return pageToReturn;
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/modifyProduct", method = RequestMethod.POST)
     public String modifyProduct(@RequestParam(value="modify") String id,
                                 Model m, HttpSession session) {
@@ -390,6 +412,7 @@ public class WebController {
         return pageToReturn;
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/applyChangesProduct", method = RequestMethod.POST)
     public String applyChangesProduct(@ModelAttribute(value="product") Product product,
                                       @RequestParam(value="ingredient") ArrayList<String> new_ingredients,
@@ -452,25 +475,30 @@ public class WebController {
         return pageToReturn;
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/businessProfile")
     public String deleteProduct(Model m, HttpSession session) {
 
         String pageToReturn = "businessProfile";
 
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
-        else{
-            Business business = (Business) session.getAttribute("business");
-            m.addAttribute("business", business);
-            m.addAttribute("business_name_error", false);
-            m.addAttribute("VATNumber_error", false);
-        }
+            System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String loggedUser = auth.getName();
+
+            Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+            if (business_opt.isPresent()){
+                Business business = business_opt.get();
+
+                m.addAttribute("business", business);
+                m.addAttribute("business_name_error", false);
+                m.addAttribute("VATNumber_error", false);
+
+            }
 
         return pageToReturn;
     }
 
-
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/applyChangesBusiness", method = RequestMethod.POST)
     public String applyChangesBusiness(@ModelAttribute(value="business") Business modifiedBusiness,
                                       @RequestParam("file") MultipartFile image,
@@ -570,6 +598,7 @@ public class WebController {
         return pageToReturn;
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/signAsPrepared", method = RequestMethod.POST)
     public String signAsPrepared(@RequestParam(value="prepared") String id,
                                 Model m, HttpSession session) throws FirebaseMessagingException {
@@ -600,6 +629,7 @@ public class WebController {
         return pageToReturn;
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/signAsToPrepare", method = RequestMethod.POST)
     public String signAsToPrepare(@RequestParam(value="toPrepare") String id,
                                 Model m, HttpSession session) {
@@ -621,6 +651,7 @@ public class WebController {
         return pageToReturn;
     }
 
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/signAsCollected", method = RequestMethod.POST)
     public String signAsCollected(@RequestParam(value="toCollect") String id,
                                 Model m, HttpSession session) throws FirebaseMessagingException {
@@ -647,24 +678,29 @@ public class WebController {
         return pageToReturn;
     }
 
-    @RequestMapping({"orders"})
+    @PreAuthorize("hasRole('BUSINESS')")
+    @RequestMapping({"businessOrders"})
     public String orders(Model m, HttpSession session) {
 
         String pageToReturn = "orders";
 
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String loggedUser = auth.getName();
+        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+
+        if (business_opt.isPresent()){
+            Business business = business_opt.get();
+
+            Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
+
+            if (orderList.isPresent()){
+                m.addAttribute("orders", orderList.get());
+            }
+            m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("business", business);
         }
 
-        Business business = (Business) session.getAttribute("business");
-
-        Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
-
-        if (orderList.isPresent()){
-            m.addAttribute("orders", orderList.get());
-        }
-        m.addAttribute("businessName", business.getBusinessName());
-        m.addAttribute("business", business);
         return pageToReturn;
     }
 

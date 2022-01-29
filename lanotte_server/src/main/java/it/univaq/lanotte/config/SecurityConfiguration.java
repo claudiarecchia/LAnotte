@@ -6,7 +6,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -18,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
@@ -26,6 +29,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired
@@ -100,34 +104,44 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             http
-
-                    .antMatcher("/business*")
-                    .authorizeRequests()
-                    .anyRequest()
-                    .hasRole("USER")
+                    .authorizeRequests().antMatchers("/businessRegistraion").permitAll()
 
                     .and()
                     .formLogin()
                     .loginPage("/businessLogin").permitAll()
                     .usernameParameter("businessName")
                     .loginProcessingUrl("/businessLogin")
-
-                    //.loginProcessingUrl("/businessLogin")
                     // .failureUrl("/loginUser?error=loginError")
-                    .defaultSuccessUrl("/index", true)
+                    .defaultSuccessUrl("/businessDashboard", true)
+
+
+                    .and()
+                    .authorizeRequests()
+                    .antMatchers("/businessMenu", "/businessProfile", "/businessDashboard")
+                    // .anyRequest()
+                    // .authenticated()
+                    .hasRole("BUSINESS")
 
                     .and()
                     .logout()
+                    .clearAuthentication(true)
                     .logoutUrl("/businessLogout")
                     .logoutSuccessUrl("/businessLogin")
                     .deleteCookies("JSESSIONID")
+                    .invalidateHttpSession(true)
 
                     .and()
+                    // .anonymous().disable()
                     .exceptionHandling()
-                    .accessDeniedPage("/403")
+                    .accessDeniedPage("/error403")
 
                     .and()
-                    .csrf().disable();
+                     .csrf().disable();
+
+//                    .anonymous().disable()
+//                    .exceptionHandling()
+//                    .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+
 
         }
 

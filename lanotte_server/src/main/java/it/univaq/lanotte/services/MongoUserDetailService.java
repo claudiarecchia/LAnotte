@@ -31,7 +31,7 @@ private BusinessRepository businessRepository;
         if(business == null) {
             throw new UsernameNotFoundException("Business not found");
         }
-        List<SimpleGrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("business"));
+        List<SimpleGrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_BUSINESS"));
         return new User(business.get().getBusinessName(), business.get().getPassword(), authorities);
     }
 }

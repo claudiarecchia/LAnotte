@@ -34,7 +34,7 @@
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" th:href="@{businessDashboard}">
                 <div class="sidebar-brand-text mx-3">L'Anotte</div>
             </a>
 
@@ -43,7 +43,7 @@
 
             <!-- Nav Item - Dashboard -->
             <li class="nav-item">
-                <a class="nav-link" href="index">
+                <a class="nav-link" th:href="@{businessDashboard}">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Dashboard</span></a>
             </li>
@@ -53,7 +53,7 @@
 
             <!-- Nav Item - Menu -->
             <li class="nav-item">
-                <a class="nav-link" href="menu">
+                <a class="nav-link" th:href="@{businessMenu}">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Gestisci menù</span></a>
             </li>
@@ -63,7 +63,7 @@
 
             <!-- Nav Item - Storico ordini -->
             <li class="nav-item">
-                <a class="nav-link" href="orders">
+                <a class="nav-link" th:href="@{businessOrders}">
                     <i class="fas fa-fw fa-folder"></i>
                     <span>Storico ordini</span></a>
             </li>

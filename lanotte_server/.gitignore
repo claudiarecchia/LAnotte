@@ -37,3 +37,6 @@ out/
 .vscode/
 
 ..idea/
+
+### private files ###
+**/src/main/resources/firebase-service-account.json
