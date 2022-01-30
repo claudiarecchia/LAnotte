@@ -12,10 +12,12 @@ import it.univaq.lanotte.services.FirebaseMessagingService;
 import it.univaq.lanotte.services.RandomNumbers;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -33,6 +35,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.swing.text.html.Option;
 import java.io.IOException;
@@ -43,7 +47,7 @@ import java.util.*;
 
 @Controller
 @RequestMapping("")
-public class WebController {
+public class WebController implements ErrorController {
 
     @Autowired
     ProductRepository productRepository;
@@ -153,7 +157,8 @@ public class WebController {
         return pageToReturn;
     }
 
-    @PreAuthorize("hasRole('BUSINESS')")
+    // @PreAuthorize("hasRole('BUSINESS')")
+    @Secured({"ROLE_BUSINESS"})
     @RequestMapping({"businessDashboard", "/"})
     public String index(Model m, HttpSession session) {
 
@@ -235,7 +240,7 @@ public class WebController {
 
         // session.removeAttribute("business");
 
-        return "businessLogin";
+        return "redirect:/businessLogin";
     }
 
     @PreAuthorize("hasRole('BUSINESS')")
@@ -702,6 +707,26 @@ public class WebController {
         }
 
         return pageToReturn;
+    }
+
+
+    @RequestMapping("/pageError")
+    public String handleError(HttpServletRequest request) {
+        Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+
+        if (status != null) {
+            Integer statusCode = Integer.valueOf(status.toString());
+
+            if(statusCode == HttpStatus.NOT_FOUND.value()) {
+                System.out.println("NOT FOUND");
+                return "404";
+            }
+            else if(statusCode == HttpStatus.INTERNAL_SERVER_ERROR.value()) {
+                System.out.println("INTERNAL SERVER ERROR");
+                return "500";
+            }
+        }
+        return "404";
     }
 
 

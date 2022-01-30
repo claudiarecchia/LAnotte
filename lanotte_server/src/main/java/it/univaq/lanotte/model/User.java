@@ -28,6 +28,9 @@ public class User {
     @Field("apple_id")
     private String appleId;
 
+    // only for admin
+    private String name;
+
     @Transient
     private Map<String, ArrayList<JSONObject>> favouriteProductsToJSON = new HashMap<>();
 

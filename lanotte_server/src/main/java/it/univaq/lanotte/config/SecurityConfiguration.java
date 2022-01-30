@@ -2,6 +2,8 @@ package it.univaq.lanotte.config;
 
 import it.univaq.lanotte.services.MongoUserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +26,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
@@ -35,8 +38,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Autowired
     MongoUserDetailService userDetailsService;
 
+    @EnableWebSecurity
     @Configuration
-    @Order(1)
+    @Order(2)
     public static class App1ConfigurationAdapter extends WebSecurityConfigurerAdapter {
         public App1ConfigurationAdapter() {
             super();
@@ -56,14 +60,17 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 //                    .permitAll();
 
             http
-                    .antMatcher("/admin*")
+                    .requestMatcher(new AntPathRequestMatcher("/admin*"))
                     .authorizeRequests()
-                    .anyRequest()
+                    .antMatchers("/admin*")
                     .hasRole("ADMIN")
+                    // .hasAuthority("ROLE_ADMIN")
+                    // .anyRequest()
+                    // .authenticated()
 
                     .and()
                     .formLogin()
-                    // .loginPage("/login")
+                    .permitAll()
                     // .loginProcessingUrl("/admin_login")
                     // .failureUrl("/loginAdmin?error=loginError")
                     .defaultSuccessUrl("/adminDashboard", true)
@@ -71,7 +78,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .logout()
                     //.logoutUrl("/admin_logout")
                     // .logoutSuccessUrl("/protectedLinks")
+                    .clearAuthentication(true)
                     .deleteCookies("JSESSIONID")
+                    .invalidateHttpSession(true)
+
 
                     .and()
                     .exceptionHandling()
@@ -90,11 +100,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .antMatchers("static/**", "css/**", "img/**");
         }
 
+
     }
 
-
+    @EnableWebSecurity
     @Configuration
-    @Order(2)
+    @Order(1)
     public static class SecurityConfigurationBusinesses extends WebSecurityConfigurerAdapter {
 
         public SecurityConfigurationBusinesses() {
@@ -104,23 +115,25 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             http
-                    .authorizeRequests().antMatchers("/businessRegistraion").permitAll()
-
+                    //.authorizeRequests()
+                    .requestMatcher(new AntPathRequestMatcher("/business*"))
+                    .authorizeRequests()
+                    .antMatchers("/business**")
+                    //.anyRequest()
+                    //.authenticated()
+                    // .hasAuthority("ROLE_BUSINESS")
+                    .hasRole("BUSINESS")
                     .and()
+
+                    // .authorizeRequests().antMatchers("/businessRegistration").permitAll()
+
+                    //.and()
                     .formLogin()
                     .loginPage("/businessLogin").permitAll()
                     .usernameParameter("businessName")
                     .loginProcessingUrl("/businessLogin")
                     // .failureUrl("/loginUser?error=loginError")
                     .defaultSuccessUrl("/businessDashboard", true)
-
-
-                    .and()
-                    .authorizeRequests()
-                    .antMatchers("/businessMenu", "/businessProfile", "/businessDashboard")
-                    // .anyRequest()
-                    // .authenticated()
-                    .hasRole("BUSINESS")
 
                     .and()
                     .logout()
@@ -135,6 +148,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .exceptionHandling()
                     .accessDeniedPage("/error403")
 
+
                     .and()
                      .csrf().disable();
 
@@ -145,21 +159,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         }
 
-//        @Override
-//        protected void configure(final AuthenticationManagerBuilder auth) throws Exception {
-//            auth.inMemoryAuthentication()
-//                    .withUser("user1").password(passwordEncoder().encode("user1")).roles("USER")
-//                    .and()
-//                    .withUser("user2").password(passwordEncoder().encode("user2")).roles("USER")
-//                    .and()
-//                    .withUser("admin").password(passwordEncoder().encode("admin")).roles("ADMIN");
-//        }
-
-
         @Override
         public void configure(WebSecurity web) throws Exception {
             web
                     .ignoring()
+                    .antMatchers("/businessRegistration")
                     .antMatchers("/**/*.js", "/**/*.css")
                     .antMatchers("/resources/**", "/static/**", "/css/**", "/img/**")
                     .antMatchers("static/**", "css/**", "img/**");
@@ -167,50 +171,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     }
 
+    @Override
+    public void configure(AuthenticationManagerBuilder builder) throws Exception {
+        builder.userDetailsService(userDetailsService);
+    }
 
-//    @Override
-//    protected void configure(final AuthenticationManagerBuilder auth) throws Exception {
-//        auth.inMemoryAuthentication()
-//                .withUser("user1").password(passwordEncoder().encode("user1")).roles("USER")
-//                .and()
-//                .withUser("user2").password(passwordEncoder().encode("user2")).roles("USER")
-//                .and()
-//                .withUser("admin").password(passwordEncoder().encode("admin")).roles("ADMIN");
-//    }
-
-
-
-//    @Bean
-//    @Override
-//    public UserDetailsService userDetailsService() {
-//        UserDetails user =
-//                User.withDefaultPasswordEncoder()
-//                        .username("user")
-//                        .password("password")
-//                        .roles("USER")
-//                        .build();
-//
-//        return new InMemoryUserDetailsManager(user);
-//    }
-
-//    protected void configure(final AuthenticationManagerBuilder auth) throws Exception {
-//        auth.inMemoryAuthentication()
-//                .withUser("user1").password(passwordEncoder().encode("user1Pass")).roles("USER")
-//                .and()
-//                .withUser("user2").password(passwordEncoder().encode("user2Pass")).roles("USER")
-//                .and()
-//                .withUser("admin").password(passwordEncoder().encode("admin")).roles("ADMIN");
-//    }
-//
     @Bean
     public static PasswordEncoder passwordEncoder() {
         // return new BCryptPasswordEncoder();
         return NoOpPasswordEncoder.getInstance();
-    }
-
-    @Override
-    public void configure(AuthenticationManagerBuilder builder) throws Exception {
-        builder.userDetailsService(userDetailsService);
     }
 
 }

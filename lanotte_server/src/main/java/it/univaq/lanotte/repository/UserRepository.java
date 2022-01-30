@@ -16,8 +16,6 @@ import java.util.Optional;
 public interface UserRepository extends MongoRepository<User, String>{
     User findByEmail(String email);
     Optional<User> findByAppleId(String appleID);
+    Optional<User> findByName(String name);
 
-
-    @Query(value = "{'favourites.age' : ?0}")
-    List<User> findAllByAttributesAge(int age);
 }
