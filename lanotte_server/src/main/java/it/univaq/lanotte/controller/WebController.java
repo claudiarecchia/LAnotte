@@ -243,36 +243,44 @@ public class WebController implements ErrorController {
         return "redirect:/businessLogin";
     }
 
-    @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "addProduct", method = RequestMethod.GET)
+    // @PreAuthorize("hasRole('BUSINESS')")
+    @RequestMapping(value = "businessAddProduct", method = RequestMethod.GET)
     public String addProduct(Model m, HttpSession session) {
 
         String pageToReturn = "addProduct";
 
-        // check session value
-        if (session.getAttribute("business") != null) {
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String loggedUser = auth.getName();
+        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+        if (business_opt.isPresent()){
+            Business business = business_opt.get();
 
-            Business business = (Business) session.getAttribute("business");
             m.addAttribute("businessName", business.getBusinessName());
             m.addAttribute("business", business);
 
             m.addAttribute("product", new Product());
             m.addAttribute("product_name_error", false);
+
         }
-        // not logged in --> login
-        else{
-            pageToReturn = "redirect:/login";
-        }
+
         return pageToReturn;
     }
 
-    @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "addProduct", method = RequestMethod.POST)
+    // @PreAuthorize("hasRole('BUSINESS')")
+    @RequestMapping(value = "businessAddProduct", method = RequestMethod.POST)
     public String addProduct(@ModelAttribute Product product,
                              @RequestParam("file") MultipartFile image,
                              @RequestParam("ingredient") ArrayList<String> ingredients,
                              Model m, HttpSession session) throws Exception {
         String pageToReturn = "menu";
+
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String loggedUser = auth.getName();
+        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+        Business business = business_opt.get();
+
 
         // selected an image
         if (!(image.getOriginalFilename().contentEquals(""))) {
@@ -284,7 +292,6 @@ public class WebController implements ErrorController {
         }
 
         product.setIngredients(ingredients);
-        Business business = (Business) session.getAttribute("business");
 
         // check if already exists a product with the same name
         Product alreadyExistingProduct = business.searchProductByName(product);
@@ -294,9 +301,7 @@ public class WebController implements ErrorController {
             pageToReturn = "addProduct";
         }
         else {
-
             Product savedProduct = productRepository.save(product);
-
             // save orders for "old" business
             Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
             business.addProductToMenu(savedProduct);
@@ -310,10 +315,7 @@ public class WebController implements ErrorController {
                 }
             }
 
-            // update stored value in session
-            session.setAttribute("business", business);
-
-            m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("business", business);
             List<Product> product_list = business.getProducts();
             m.addAttribute("products", product_list);
         }
@@ -343,17 +345,17 @@ public class WebController implements ErrorController {
     }
 
     @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "/deleteProduct/{id}")
+    @RequestMapping(value = "/businessDeleteProduct/{id}")
     public String deleteProduct(@PathVariable String id, Model m, HttpSession session) {
 
-        String pageToReturn = "redirect:/menu";
+        String pageToReturn = "redirect:/businessMenu";
 
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
-        else{
-            Business business = (Business) session.getAttribute("business");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String loggedUser = auth.getName();
+        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+        Business business = business_opt.get();
 
             Optional<Product> productToBeRemoved = productRepository.findById(id);
 
@@ -381,17 +383,14 @@ public class WebController implements ErrorController {
                 }
             }
 
-            m.addAttribute("businessName", business.getBusinessName());
+            m.addAttribute("business", business);
             m.addAttribute("products", business.getProducts());
-        }
-
-
 
         return pageToReturn;
     }
 
-    @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "/modifyProduct", method = RequestMethod.POST)
+    // @PreAuthorize("hasRole('BUSINESS')")
+    @RequestMapping(value = "/businessModifyProduct", method = RequestMethod.POST)
     public String modifyProduct(@RequestParam(value="modify") String id,
                                 Model m, HttpSession session) {
 

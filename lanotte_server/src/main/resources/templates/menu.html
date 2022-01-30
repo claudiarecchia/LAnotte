@@ -136,7 +136,7 @@
                     <!-- Page Heading -->
                     <h1 class="h3 mb-2 text-gray-800">Menù</h1>
 
-                    <form class="mt-1 mb-3" th:action="@{'/addProduct'}" method="get">
+                    <form class="mt-1 mb-3" th:action="@{'/businessAddProduct'}" method="get">
                         <button type="submit" name="add" class="btn btn-success">Aggiungi un nuovo prodotto al menù</button>
                     </form>
 
@@ -203,11 +203,11 @@
                                                 </td>
                                                 <td>
                                                     <div class="form-row">
-                                                        <form class="mr-2 ml-1 mb-2" th:action="@{'/modifyProduct'}" method="post">
+                                                        <form class="mr-2 ml-1 mb-2" th:action="@{'/businessModifyProduct'}" method="post">
                                                             <button type="submit" name="modify" th:value="${p.getId()}" class="btn btn-secondary">Modifica</button>
                                                         </form>
 
-                                                        <form class="mr-2 ml-1" th:action="@{'/deleteProduct/{id}'(id=${p.getId()})}" method="get">
+                                                        <form class="mr-2 ml-1" th:action="@{'/businessDeleteProduct/{id}'(id=${p.getId()})}" method="get">
                                                             <button type="submit" class="btn btn-danger">Elimina</button>
                                                         </form>
 
