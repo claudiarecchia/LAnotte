@@ -39,11 +39,12 @@
                             <div class="text-center">
                                 <h1 class="h4 text-gray-900 mb-4">Registra la tua azienda</h1>
                             </div>
-                            <form class="user" th:action="@{'/businessRegistration'}" method="post" onsubmit="return validateNewBusiness()"
+                            <form class="user" th:action="@{'/businessRegistration'}" method="post" enctype="utf8" onsubmit="return validateNewBusiness()"
                                   th:object="${business}">
                                     <div class="form-group">
                                         <input type="text" class="form-control form-control-user" id="business_name" name="business_name"
                                                th:field="*{businessName}" placeholder="Nome attività" required>
+                                        <p th:each="error: ${#fields.errors('businessName')}">Validation error</p>
                                     </div>
 
                                 <div class="alert-danger text-center rounded form-group" th:if="${business_name_error}">
@@ -53,7 +54,7 @@
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-user" id="vat_number"
                                            placeholder="Partita IVA" th:field="*{VATNumber}" required>
-                                    <small class="form-text text-muted">Non la condivideremo con nessuno.</small>
+
                                 </div>
 
                                 <div class="alert-danger text-center rounded form-group" th:if="${VAT_error}">

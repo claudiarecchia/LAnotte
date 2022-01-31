@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,6 +31,7 @@ import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
+
 
 @Configuration
 @EnableWebSecurity
@@ -121,7 +124,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .antMatchers("/business**")
                     //.anyRequest()
                     //.authenticated()
-                    // .hasAuthority("ROLE_BUSINESS")
+                    //.hasAuthority("ROLE_BUSINESS")
                     .hasRole("BUSINESS")
                     .and()
 
@@ -129,7 +132,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .loginPage("/businessLogin").permitAll()
                     .usernameParameter("businessName")
                     .loginProcessingUrl("/businessLogin")
-                    // .failureUrl("/businessLogin")
                     .defaultSuccessUrl("/businessDashboard", true)
 
                     .and()
@@ -141,18 +143,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .invalidateHttpSession(true)
 
                     .and()
-                    // .anonymous().disable()
                     .exceptionHandling()
                     .accessDeniedPage("/error403")
 
 
                     .and()
                      .csrf().disable();
-
-//                    .anonymous().disable()
-//                    .exceptionHandling()
-//                    .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
-
 
         }
 
@@ -175,10 +171,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
-        // return new BCryptPasswordEncoder();
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
+        // return NoOpPasswordEncoder.getInstance();
     }
 
+    @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
 }
 
 

@@ -1,6 +1,7 @@
 package it.univaq.lanotte.model;
 
 import it.univaq.lanotte.Encryption;
+import it.univaq.lanotte.config.SecurityConfiguration;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,6 +11,7 @@ import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.File;
 import java.util.*;
@@ -41,8 +43,8 @@ public class Business {
     private String city;
     private String CAP;
     private String password;
-    @Field("salt_value")
-    private String saltValue;
+
+    // private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -77,13 +79,10 @@ public class Business {
         this.rating = 0.0;
         this.products = new ArrayList<>();
         this.openingHoures = new HashMap<>();
+        this.initOpeningHoures();
         this.numberRatings = 0;
         this.ratingSum = 0;
-
-        List<String> passValues = EncryptPassword(password);
-        this.saltValue = passValues.get(0);
-        this.password = passValues.get(1);
-
+        this.password = Encryption.passwordEncoder.encode(password);
     }
 
     public Business(){}
@@ -94,20 +93,6 @@ public class Business {
             value = Base64.getEncoder().encodeToString(image);
         }
         return value;
-    }
-
-    private List<String> EncryptPassword(String password){
-        /* generates the Salt value. It can be stored in a database. */
-        String saltvalue = Encryption.getSaltvalue(30);
-
-        /* generates an encrypted password. It can be stored in a database.*/
-        String encryptedpassword = Encryption.generateSecurePassword(password, saltvalue);
-
-        List<String> returnValues = new ArrayList<>();
-        returnValues.add(saltvalue);
-        returnValues.add(encryptedpassword);
-
-        return returnValues;
     }
 
     public void addProductToMenu(Product product){
