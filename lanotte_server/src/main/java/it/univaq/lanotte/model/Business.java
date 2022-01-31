@@ -166,4 +166,40 @@ public class Business {
         }
     }
 
+    public void setNewOpeningClosingHoures(ArrayList<String> lun, ArrayList<String> mar, ArrayList<String> mer,
+                                           ArrayList<String> gio, ArrayList<String> ven, ArrayList<String> sab,
+                                           ArrayList<String> dom){
+        this.setOpeningHoures(new HashMap<>());
+        this.initOpeningHoures();
+        this.setOpeningHour("0", lun.get(0));
+        this.setClosingHour("0", lun.get(1));
+
+        this.setOpeningHour("1", mar.get(0));
+        this.setClosingHour("1", mar.get(1));
+
+        this.setOpeningHour("2", mer.get(0));
+        this.setClosingHour("2", mer.get(1));
+
+        this.setOpeningHour("3", gio.get(0));
+        this.setClosingHour("3", gio.get(1));
+
+        this.setOpeningHour("4", ven.get(0));
+        this.setClosingHour("4", ven.get(1));
+
+        this.setOpeningHour("5", sab.get(0));
+        this.setClosingHour("5", sab.get(1));
+
+        this.setOpeningHour("6", dom.get(0));
+        this.setClosingHour("6", dom.get(1));
+    }
+
+    public void updateRemainingValuesBusiness(Business modifiedBusiness){
+        this.setBusinessName(modifiedBusiness.getBusinessName());
+        this.setVATNumber(modifiedBusiness.getVATNumber());
+        this.setCity(modifiedBusiness.getCity());
+        this.setCAP(modifiedBusiness.getCAP());
+        this.setLocation(modifiedBusiness.getLocation());
+        this.setOpeningHoures(modifiedBusiness.getOpeningHoures());
+    }
+
 }

@@ -137,7 +137,7 @@
                         <h1 class="h3 mb-0 text-gray-800">Profilo attività</h1>
                     </div>
 
-                    <form class="user" enctype="multipart/form-data" th:action="@{'/applyChangesBusiness'}" method="post"
+                    <form class="user" enctype="multipart/form-data" th:action="@{'/businessApplyChanges'}" method="post"
                           th:object="${business}" onsubmit="return validateBusinessModification()">
 
                         <div th:if="${business.getImageBase64() != '' } " >

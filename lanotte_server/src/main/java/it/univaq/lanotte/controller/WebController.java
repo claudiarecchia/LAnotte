@@ -64,6 +64,15 @@ public class WebController implements ErrorController {
     @Autowired
     FirebaseMessagingService firebaseMessagingService;
 
+
+    public Business getLoggedUser(){
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String loggedUser = auth.getName();
+        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
+        return business_opt.get();
+    }
+
     @RequestMapping("businessRegistration")
     public String businessRegistration(Model m, HttpSession session) {
         m.addAttribute("business", new Business());
@@ -130,32 +139,32 @@ public class WebController implements ErrorController {
         return "login";
     }
 
-    @RequestMapping(value = "businessLogin", method = RequestMethod.POST)
-    public String login(@ModelAttribute Business business, Model m, HttpSession session) throws Exception {
-
-        String pageToReturn = "redirect:/index";
-
-        Optional<Business> business_opt = businessRepository.findByBusinessName(business.getBusinessName());
-        if (business_opt.isPresent()){
-            /* verify the original password and encrypted password */
-            Boolean status = Encryption.verifyPassword(business.getPassword(), business_opt.get().getPassword(), business_opt.get().getSaltValue());
-            if (status){
-                // login successful -- save business in session
-                session.setAttribute("business", business_opt.get());
-            }
-            // name is present but password does not match
-            else{
-                m.addAttribute("password_error", true);
-                pageToReturn = "login";
-            }
-        }
-        // business name is not present
-        else{
-            m.addAttribute("business_name_error", true);
-            pageToReturn = "login";
-        }
-        return pageToReturn;
-    }
+//    @RequestMapping(value = "businessLogin", method = RequestMethod.POST)
+//    public String login(@ModelAttribute Business business, Model m, HttpSession session) throws Exception {
+//
+//        String pageToReturn = "redirect:/index";
+//
+//        Optional<Business> business_opt = businessRepository.findByBusinessName(business.getBusinessName());
+//        if (business_opt.isPresent()){
+//            /* verify the original password and encrypted password */
+//            Boolean status = Encryption.verifyPassword(business.getPassword(), business_opt.get().getPassword(), business_opt.get().getSaltValue());
+//            if (status){
+//                // login successful -- save business in session
+//                session.setAttribute("business", business_opt.get());
+//            }
+//            // name is present but password does not match
+//            else{
+//                m.addAttribute("password_error", true);
+//                pageToReturn = "login";
+//            }
+//        }
+//        // business name is not present
+//        else{
+//            m.addAttribute("business_name_error", true);
+//            pageToReturn = "login";
+//        }
+//        return pageToReturn;
+//    }
 
     // @PreAuthorize("hasRole('BUSINESS')")
     @Secured({"ROLE_BUSINESS"})
@@ -272,15 +281,10 @@ public class WebController implements ErrorController {
     public String addProduct(@ModelAttribute Product product,
                              @RequestParam("file") MultipartFile image,
                              @RequestParam("ingredient") ArrayList<String> ingredients,
-                             Model m, HttpSession session) throws Exception {
+                             Model m) throws Exception {
         String pageToReturn = "menu";
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String loggedUser = auth.getName();
-        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
-        Business business = business_opt.get();
-
+        Business business = getLoggedUser();
 
         // selected an image
         if (!(image.getOriginalFilename().contentEquals(""))) {
@@ -315,10 +319,10 @@ public class WebController implements ErrorController {
                 }
             }
 
-            m.addAttribute("business", business);
             List<Product> product_list = business.getProducts();
             m.addAttribute("products", product_list);
         }
+        m.addAttribute("business", business);
         return pageToReturn;
     }
 
@@ -350,41 +354,36 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "redirect:/businessMenu";
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+       Business business = getLoggedUser();
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String loggedUser = auth.getName();
-        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
-        Business business = business_opt.get();
+        Optional<Product> productToBeRemoved = productRepository.findById(id);
 
-            Optional<Product> productToBeRemoved = productRepository.findById(id);
+        // save orders for "old" business
+        Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
 
-            // save orders for "old" business
-            Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
+        // update products' list in business object
+        business.removeProductFromMenu(productToBeRemoved.get());
+        productRepository.deleteById(id);
+        // update business in db
+        businessRepository.save(business);
 
-            // update products' list in business object
-            business.removeProductFromMenu(productToBeRemoved.get());
-            productRepository.deleteById(id);
-            // update business in db
-            businessRepository.save(business);
+        // update fav for each user
+        List<User> user_list = userRepository.findAll();
+        for (User u : user_list){
+            u.removeProductFromFavourites(productToBeRemoved.get(), business);
+            userRepository.save(u);
+        }
 
-            // update fav for each user
-            List<User> user_list = userRepository.findAll();
-            for (User u : user_list){
-                u.removeProductFromFavourites(productToBeRemoved.get(), business);
-                userRepository.save(u);
+        // update old orders for business
+        if (order_list.isPresent()){
+            for (Order o : order_list.get()){
+                o.setBusiness(business);
+                orderRepository.save(o);
             }
+        }
 
-            // update old orders for business
-            if (order_list.isPresent()){
-                for (Order o : order_list.get()){
-                    o.setBusiness(business);
-                    orderRepository.save(o);
-                }
-            }
-
-            m.addAttribute("business", business);
-            m.addAttribute("products", business.getProducts());
+        m.addAttribute("business", business);
+        m.addAttribute("products", business.getProducts());
 
         return pageToReturn;
     }
@@ -396,11 +395,8 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "modProduct";
 
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
+        Business business = getLoggedUser();
 
-        Business business = (Business) session.getAttribute("business");
         Optional<Product> productToModify = productRepository.findById(id);
 
         if (productToModify.isPresent()) {
@@ -417,7 +413,7 @@ public class WebController implements ErrorController {
     }
 
     @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "/applyChangesProduct", method = RequestMethod.POST)
+    @RequestMapping(value = "/businessApplyChangesProduct", method = RequestMethod.POST)
     public String applyChangesProduct(@ModelAttribute(value="product") Product product,
                                       @RequestParam(value="ingredient") ArrayList<String> new_ingredients,
                                       @RequestParam("file") MultipartFile image,
@@ -425,11 +421,8 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "menu";
 
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
+        Business business = getLoggedUser();
 
-        Business business = (Business) session.getAttribute("business");
         // there is another product with the same name in business' menu
         Product alreadyExistingProduct = business.searchProductByName(product);
 
@@ -470,40 +463,28 @@ public class WebController implements ErrorController {
                 o.updateValuesProduct(product);
                 orderRepository.save(o);
             }
-
-            m.addAttribute("businessName", business.getBusinessName());
-
             m.addAttribute("products", business.getProducts());
         }
-
+        m.addAttribute("business", business);
         return pageToReturn;
     }
 
-    @PreAuthorize("hasRole('BUSINESS')")
+    // @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/businessProfile")
     public String deleteProduct(Model m, HttpSession session) {
 
         String pageToReturn = "businessProfile";
+        Business business = getLoggedUser();
 
-            System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String loggedUser = auth.getName();
-
-            Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
-            if (business_opt.isPresent()){
-                Business business = business_opt.get();
-
-                m.addAttribute("business", business);
-                m.addAttribute("business_name_error", false);
-                m.addAttribute("VATNumber_error", false);
-
-            }
+        m.addAttribute("business", business);
+        m.addAttribute("business_name_error", false);
+        m.addAttribute("VATNumber_error", false);
 
         return pageToReturn;
     }
 
-    @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "/applyChangesBusiness", method = RequestMethod.POST)
+    // @PreAuthorize("hasRole('BUSINESS')")
+    @RequestMapping(value = "/businessApplyChanges", method = RequestMethod.POST)
     public String applyChangesBusiness(@ModelAttribute(value="business") Business modifiedBusiness,
                                       @RequestParam("file") MultipartFile image,
                                        @RequestParam("lun") ArrayList<String> lun,
@@ -513,92 +494,85 @@ public class WebController implements ErrorController {
                                        @RequestParam("ven") ArrayList<String> ven,
                                        @RequestParam("sab") ArrayList<String> sab,
                                        @RequestParam("dom") ArrayList<String> dom,
-                                      Model m, HttpSession session) throws IOException {
+                                      Model m) throws IOException {
 
         String pageToReturn = "businessProfile";
         // also change value stored in session
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
-        else {
-            Business business = (Business) session.getAttribute("business");
 
-            // check error in name (already existing business)
-            String modifiedBusinessName = modifiedBusiness.getBusinessName();
-            if (!Objects.equals(modifiedBusinessName, business.getBusinessName())) {
-                Optional<Business> existingBusiness = businessRepository.findByBusinessName(modifiedBusinessName);
+        Business business = getLoggedUser();
+
+        // check error in name (already existing business)
+        String modifiedBusinessName = modifiedBusiness.getBusinessName();
+        if (!Objects.equals(modifiedBusinessName, business.getBusinessName())) {
+            Optional<Business> existingBusiness = businessRepository.findByBusinessName(modifiedBusinessName);
+            if (existingBusiness.isPresent()) {
+                m.addAttribute("business_name_error", true);
+            }
+        } else {
+            // check VATNumber
+            String modifiedVATNumber = modifiedBusiness.getVATNumber();
+            if (!Objects.equals(modifiedVATNumber, business.getVATNumber())) {
+                Optional<Business> existingBusiness = businessRepository.findByVATNumber(modifiedVATNumber);
                 if (existingBusiness.isPresent()) {
-                    m.addAttribute("business_name_error", true);
-                    m.addAttribute("business", business);
+                    m.addAttribute("VATNumber_error", true);
                 }
-            } else {
-                // check VATNumber
-                String modifiedVATNumber = modifiedBusiness.getVATNumber();
-                if (!Objects.equals(modifiedVATNumber, business.getVATNumber())) {
-                    Optional<Business> existingBusiness = businessRepository.findByVATNumber(modifiedVATNumber);
-                    if (existingBusiness.isPresent()) {
-                        m.addAttribute("VATNumber_error", true);
-                        m.addAttribute("business", business);
-                    }
+            }
+            // no errors
+            else{
+
+                // save business' orders
+                Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
+                modifiedBusiness.setNewOpeningClosingHoures(lun, mar, mer, gio, ven, sab, dom);
+//                modifiedBusiness.setOpeningHoures(new HashMap<>());
+//                modifiedBusiness.initOpeningHoures();
+//                modifiedBusiness.setOpeningHour("0", lun.get(0));
+//                modifiedBusiness.setClosingHour("0", lun.get(1));
+//
+//                modifiedBusiness.setOpeningHour("1", mar.get(0));
+//                modifiedBusiness.setClosingHour("1", mar.get(1));
+//
+//                modifiedBusiness.setOpeningHour("2", mer.get(0));
+//                modifiedBusiness.setClosingHour("2", mer.get(1));
+//
+//                modifiedBusiness.setOpeningHour("3", gio.get(0));
+//                modifiedBusiness.setClosingHour("3", gio.get(1));
+//
+//                modifiedBusiness.setOpeningHour("4", ven.get(0));
+//                modifiedBusiness.setClosingHour("4", ven.get(1));
+//
+//                modifiedBusiness.setOpeningHour("5", sab.get(0));
+//                modifiedBusiness.setClosingHour("5", sab.get(1));
+//
+//                modifiedBusiness.setOpeningHour("6", dom.get(0));
+//                modifiedBusiness.setClosingHour("6", dom.get(1));
+
+
+                // update business on db
+                business.updateRemainingValuesBusiness(modifiedBusiness);
+
+//                business.setBusinessName(modifiedBusiness.getBusinessName());
+//                business.setVATNumber(modifiedVATNumber);
+//                business.setCity(modifiedBusiness.getCity());
+//                business.setCAP(modifiedBusiness.getCAP());
+//                business.setLocation(modifiedBusiness.getLocation());
+//                business.setOpeningHoures(modifiedBusiness.getOpeningHoures());
+
+                if (!(image.getOriginalFilename().contentEquals(""))) {
+                    business.setImage(image.getBytes());
                 }
-                // no errors
-                else{
 
-                    // save business' orders
-                    Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
+                businessRepository.save(business);
 
-                    modifiedBusiness.setOpeningHoures(new HashMap<>());
-                    modifiedBusiness.initOpeningHoures();
-                    modifiedBusiness.setOpeningHour("0", lun.get(0));
-                    modifiedBusiness.setClosingHour("0", lun.get(1));
-
-                    modifiedBusiness.setOpeningHour("1", mar.get(0));
-                    modifiedBusiness.setClosingHour("1", mar.get(1));
-
-                    modifiedBusiness.setOpeningHour("2", mer.get(0));
-                    modifiedBusiness.setClosingHour("2", mer.get(1));
-
-                    modifiedBusiness.setOpeningHour("3", gio.get(0));
-                    modifiedBusiness.setClosingHour("3", gio.get(1));
-
-                    modifiedBusiness.setOpeningHour("4", ven.get(0));
-                    modifiedBusiness.setClosingHour("4", ven.get(1));
-
-                    modifiedBusiness.setOpeningHour("5", sab.get(0));
-                    modifiedBusiness.setClosingHour("5", sab.get(1));
-
-                    modifiedBusiness.setOpeningHour("6", dom.get(0));
-                    modifiedBusiness.setClosingHour("6", dom.get(1));
-
-
-                    // update business in session and on db
-                    business.setBusinessName(modifiedBusiness.getBusinessName());
-                    business.setVATNumber(modifiedVATNumber);
-                    business.setCity(modifiedBusiness.getCity());
-                    business.setCAP(modifiedBusiness.getCAP());
-                    business.setLocation(modifiedBusiness.getLocation());
-                    business.setOpeningHoures(modifiedBusiness.getOpeningHoures());
-                    if (!(image.getOriginalFilename().contentEquals(""))) {
-                        business.setImage(image.getBytes());
+                // update business' orders as well
+                if (orderList.isPresent()){
+                    for (Order o : orderList.get()){
+                        o.setBusiness(business);
+                        orderRepository.save(o);
                     }
-
-
-                    businessRepository.save(business);
-                    session.removeAttribute("business");
-                    session.setAttribute("business", business);
-
-                    // update business' orders as well
-                    if (orderList.isPresent()){
-                        for (Order o : orderList.get()){
-                            o.setBusiness(business);
-                            orderRepository.save(o);
-                        }
-                    }
-
-                    m.addAttribute("business", business);
                 }
             }
         }
+        m.addAttribute("business", business);
         return pageToReturn;
     }
 

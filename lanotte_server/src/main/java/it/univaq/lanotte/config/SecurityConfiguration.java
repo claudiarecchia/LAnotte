@@ -125,14 +125,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .hasRole("BUSINESS")
                     .and()
 
-                    // .authorizeRequests().antMatchers("/businessRegistration").permitAll()
-
-                    //.and()
                     .formLogin()
                     .loginPage("/businessLogin").permitAll()
                     .usernameParameter("businessName")
                     .loginProcessingUrl("/businessLogin")
-                    // .failureUrl("/loginUser?error=loginError")
+                    // .failureUrl("/businessLogin")
                     .defaultSuccessUrl("/businessDashboard", true)
 
                     .and()
