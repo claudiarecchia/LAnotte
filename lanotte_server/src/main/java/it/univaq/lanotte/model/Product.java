@@ -7,6 +7,8 @@ import org.bson.types.ObjectId;
 import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -25,6 +27,8 @@ public class Product {
     private String category;
     private ArrayList<String> stamps;
     private Double price;
+    @Field("alcohol_content")
+    private Double alcoholContent;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -34,6 +38,12 @@ public class Product {
         json.put("category", category);
         json.put("stamps", stamps);
         json.put("price", price);
+        if (this.getAlcoholContent() != null){
+            json.put("alcohol_content", alcoholContent.toString());
+        }
+        else {
+            json.put("alcohol_content", "");
+        }
 
         if(image != null) {
             json.put("image", Base64.getEncoder().encodeToString(image));

@@ -6,15 +6,12 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import it.univaq.lanotte.model.*;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.OrderRepository;
 import it.univaq.lanotte.repository.ProductRepository;
 import it.univaq.lanotte.repository.UserRepository;
-import it.univaq.lanotte.services.FirebaseMessagingService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,6 +20,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+/**
+ * class which permits mobile devices to ask for L'Anotte resources;
+ * reachable by adding "/api/" to requests.
+ */
 @RestController
 @RequestMapping("api")
 public class MobileAPI {
@@ -39,6 +40,10 @@ public class MobileAPI {
     @Autowired
     OrderRepository orderRepository;
 
+    /**
+     *
+     * @return a stringified json array containing all the products found in the db
+     */
     @GetMapping("/allProducts")
     @ResponseBody
     public String products() {
@@ -51,14 +56,15 @@ public class MobileAPI {
         return j_arr.toString();
     }
 
+    /**
+     *
+     * @return a stringified json array containing all the businesses found in the db
+     */
     @GetMapping("/allBusinesses")
     @ResponseBody
-    public String businesses() throws FirebaseMessagingException {
+    public String businesses() {
         JSONArray j_arr = new JSONArray();
         List<Business> business_list = businessRepository.findAll();
-
-        // prova notifiche
-        // firebaseMessagingService.sendNotification("ckikeP5ls0RJn8g3w8e3w9:APA91bFIj46i7OC8RrFsiIUVgQs-NRABFKaR_Fx_LeLLrMvetYl8e0X759rzl0_49d1hCZs3b1vy1KlGKCM76B7KmMW5GWrUC7ARlqXYkBeaM-nSULZJEQdAIQlMUrHSVOFo8hOcv0Zh");
 
         for(Business bus: business_list)
             j_arr.put(bus.toJSON());
@@ -66,6 +72,20 @@ public class MobileAPI {
         return j_arr.toString();
     }
 
+    /**
+     *
+     * @param requestBody contains:
+     *      the Order object, which contains:
+     *              - the Business object (name: business)
+     *              - the products list in which each element is a Product object (name: products)
+     *              - the User object (name: user)
+     *              - the String date_time already in the form "gg/mm/aaaa, HH:mm" (name: date_time)
+     *
+     * @param token added in the "authorization" field of the request. It is the code
+     *              representing the device to which will be sent the notification when the order changes its status
+     *
+     * @return the Order object, into a stringified jsonarray
+     */
     @PostMapping("/placeOrder")
     @ResponseBody
     public String placeOrder(@RequestBody String requestBody, @RequestHeader("authorization") String token){
@@ -77,7 +97,6 @@ public class MobileAPI {
 
         try{
             JSONObject body = new JSONObject(requestBody);
-            // System.out.println(body);
 
             JSONObject business1 = body.getJSONObject("business");
             Optional<Business> business = businessRepository.findByBusinessName(business1.getString("business_name"));
@@ -96,26 +115,11 @@ public class MobileAPI {
             order.setDeviceToken(token);
             order.setCodeToCollect("");
 
-            // if there is no user listed, then the user is a guest
-            // so, we save a new empty user in the db and we get back the generated User
             JSONObject user1 = body.getJSONObject("user");
-            if ((user1.has("apple_id") && !user1.isNull("apple_id"))){
-
-                Optional<User> user = userRepository.findByAppleId(user1.getString("apple_id"));
-                // System.out.println(user);
-                // System.out.println("utente presente");
-                order.setUser(user.get());
-                // System.out.println(order.getUser().getId());
-            }
-
-//            else {
-//                System.out.println("utente NON presente");
-//                User new_guest_user = userRepository.save(new User(""));
-//                order.setUser(new_guest_user);
-//            }
+            Optional<User> user = userRepository.findByAppleId(user1.getString("apple_id"));
+            order.setUser(user.get());
 
             order.setDateTime(body.getString("date_time"));
-            // System.out.println(order.getDateTime());
 
         } catch (JSONException e) { }
 
@@ -125,7 +129,11 @@ public class MobileAPI {
         return j_arr.toString();
     }
 
-
+    /**
+     *
+     * @param requestBody containing the User object (and his "apple_id" as a String)
+     * @return all the orders made by the User, in a stringified jsonarray
+     */
     @PostMapping("/archive")
     @ResponseBody
     public String archive(@RequestBody String requestBody) {
@@ -133,11 +141,9 @@ public class MobileAPI {
 
         try {
             JSONObject body = new JSONObject(requestBody);
-            // System.out.println("BODY " + body);
 
             Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
             User user = user_opt.get();
-            // System.out.println(user);
             List<Order> orders = orderRepository.findAllByUserOrderByIdDesc(user);
 
             for (Order o : orders)
@@ -147,56 +153,37 @@ public class MobileAPI {
         return j_arr.toString();
     }
 
-
-//    @PostMapping("/lastOrder")
-//    @ResponseBody
-//    public String lastProductOrderedToday(@RequestBody String requestBody) {
-//        JSONArray j_arr = new JSONArray();
-//
-//        try {
-//            JSONObject body = new JSONObject(requestBody);
-//            System.out.println(body);
-//            Optional<User> user_opt = userRepository.findById(body.getString("id"));
-//            User user = user_opt.get();
-//
-//            Order order = orderRepository.findFirstByUserOrderByIdDesc(user);
-//            System.out.println(order);
-//            j_arr.put(order.toJSON());
-//        }
-//        catch (JSONException e) { }
-//
-//        return j_arr.toString();
-//    }
-
+    /**
+     *
+     * @param requestBody containing the User object (and his "apple_id" as a String)
+     * @return the User object, in a stringified jsonarray
+     */
     @PostMapping("/getUser")
     @ResponseBody
-    public String favouriteProducts(@RequestBody String requestBody) {
+    public String getUserInfos(@RequestBody String requestBody) {
         JSONArray j_arr = new JSONArray();
 
         try {
             JSONObject body = new JSONObject(requestBody);
-            // System.out.println(body);
             Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
 
-            // already present user in the db
-            if (user_opt.isPresent()) {
-                User user = user_opt.get();
-                j_arr.put(user.toJSON());
-            }
+            User user = user_opt.get();
+            j_arr.put(user.toJSON());
 
-            // is a new user -> creating a new one with the received apple_id
-            else{
-                User new_user = new User(body.getString("apple_id"));
-                userRepository.save(new_user);
-                j_arr.put(new_user.toJSON());
-            }
         }
         catch (JSONException e) { }
 
         return j_arr.toString();
     }
 
-
+    /**
+     *
+     * @param requestBody containing the User object, which contains
+     *                    - his "apple_id" as a String (name: apple_id)
+     *                    - his favourite_products as a List of Product (name: favourite_products)
+     *
+     * @return the updated User object, in a stringified jsonarray
+     */
     @PostMapping("/saveFavourites")
     @ResponseBody
     public String saveFavouriteProducts(@RequestBody String requestBody) {
@@ -204,7 +191,6 @@ public class MobileAPI {
 
         try {
             JSONObject body = new JSONObject(requestBody);
-            // System.out.println("BODY: " + body);
 
             Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
             User user = user_opt.get();
@@ -238,6 +224,15 @@ public class MobileAPI {
         return j_arr.toString();
     }
 
+    /**
+     *
+     * @param requestBody containing the User object, which contains
+     *                    - his apple_id as a String (name: apple_id)
+     *                    - his ratings as an array of [String, Int] where String is the name of the business
+     *                      and Int is the rating of the user for that business. (name: ratings)
+     *
+     * @return the updated User object, in a stringified jsonarray
+     */
     @PostMapping("/saveRatings")
     @ResponseBody
     public String saveRatings(@RequestBody String requestBody) {
@@ -260,14 +255,8 @@ public class MobileAPI {
             // get old ratings (to compare with new to update business attributes)
             Map<String, Integer> old_ratings = user.getRatings();
             MapDifference<String, Integer> diff = Maps.difference(old_ratings, result);
-            Set<String> keysOnlyInSource = diff.entriesOnlyOnLeft().keySet();
             Set<String> keysOnlyInTarget = diff.entriesOnlyOnRight().keySet();
             Map<String, MapDifference.ValueDifference<Integer>> entriesDiffering = diff.entriesDiffering();
-
-            // System.out.println("ELEMENTI DIFFERENTI:");
-            // System.out.println(keysOnlyInSource);
-            // System.out.println(keysOnlyInTarget);
-            // System.out.println(entriesDiffering);
 
             // rating for new business -> add rating
             if (keysOnlyInTarget.toString() != "[]") {
@@ -279,7 +268,6 @@ public class MobileAPI {
 
                 // apply mod
                 business.setNumberRatings(business.getNumberRatings() + 1);
-                // System.out.println(result.get(keysOnlyInTarget.iterator().next()));
                 business.setRatingSum(business.getRatingSum() + result.get(keysOnlyInTarget.iterator().next()));
                 business.setRating((double) (business.getRatingSum() / business.getNumberRatings()));
 
@@ -307,8 +295,7 @@ public class MobileAPI {
                 business.setRating((double) (business.getRatingSum() / business.getNumberRatings()));
                 businessRepository.save(business);
             }
-
-
+            
             // update ratings
             user.setRatings(result);
 
@@ -319,10 +306,6 @@ public class MobileAPI {
                 o.setUser(user);
                 orderRepository.save(o);
             }
-
-
-
-
             j_arr.put(user.toJSON());
         }
         catch (JSONException e) { } catch (JsonMappingException e) {

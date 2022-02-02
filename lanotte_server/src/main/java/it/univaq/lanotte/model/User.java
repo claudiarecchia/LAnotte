@@ -36,7 +36,6 @@ public class User {
 
     public User(String appleId){
         this.favouriteProducts = new HashMap<>();
-        // this.favouriteProductsToJSON = new HashMap<>();
         this.ratings = new HashMap<>();
         this.appleId = appleId;
     }

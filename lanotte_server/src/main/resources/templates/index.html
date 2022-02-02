@@ -237,7 +237,7 @@
                                                                     <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${#numbers.formatDecimal(order.getTotal(), 0, 2)}"> </div>
                                                                 </div>
                                                                 <div class="col-auto">
-                                                                    <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsToPrepare'}" method="post">
+                                                                    <form class="mr-2 ml-1 mb-2" th:action="@{'/businessSignAsToPrepare'}" method="post">
                                                                         <button type="submit" name="toPrepare" th:value="${order.getId()}" class="btn btn-warning">Segna in preparazione</button>
                                                                     </form>
                                                                 </div>
@@ -291,7 +291,7 @@
                                                                     <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${#numbers.formatDecimal(order.getTotal(), 0, 2)}"> </div>
                                                                 </div>
                                                                 <div class="col-auto">
-                                                                    <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsPrepared'}" method="post">
+                                                                    <form class="mr-2 ml-1 mb-2" th:action="@{'/businessSignAsPrepared'}" method="post">
                                                                         <button type="submit" name="prepared" th:value="${order.getId()}" class="btn btn-info">Segna come preparato</button>
                                                                     </form>
                                                                 </div>
@@ -353,7 +353,7 @@
                                                                     <div class="h6 mb-0 font-weight-bold text-gray-800 mt-3" th:text="'Totale €  ' + ${#numbers.formatDecimal(order.getTotal(), 0, 2)}"> </div>
                                                                 </div>
                                                                 <div class="col-auto">
-                                                                    <form class="mr-2 ml-1 mb-2" th:action="@{'/signAsCollected'}" method="post">
+                                                                    <form class="mr-2 ml-1 mb-2" th:action="@{'/businessSignAsCollected'}" method="post">
                                                                         <button type="submit" name="toCollect" th:value="${order.getId()}" class="btn btn-success">Segna come ritirato</button>
                                                                     </form>
                                                                 </div>
@@ -400,26 +400,6 @@
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="login.html">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>

@@ -44,8 +44,6 @@ public class Business {
     private String CAP;
     private String password;
 
-    // private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         JSONArray prod_list = new JSONArray();

@@ -2,7 +2,6 @@ package it.univaq.lanotte.controller;
 
 
 import com.google.firebase.messaging.FirebaseMessagingException;
-import it.univaq.lanotte.Encryption;
 import it.univaq.lanotte.model.*;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.OrderRepository;
@@ -10,43 +9,24 @@ import it.univaq.lanotte.repository.ProductRepository;
 import it.univaq.lanotte.repository.UserRepository;
 import it.univaq.lanotte.services.FirebaseMessagingService;
 import it.univaq.lanotte.services.RandomNumbers;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-//import org.springframework.security.core.Authentication;
-//import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ViewResolver;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
-import org.springframework.web.servlet.view.JstlView;
 
 import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -157,8 +137,7 @@ public class WebController implements ErrorController {
         return "login";
     }
 
-    // @PreAuthorize("hasRole('BUSINESS')")
-    // @Secured({"ROLE_BUSINESS"})
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping({"businessDashboard", "/"})
     public String index(Model m) {
 
@@ -214,38 +193,27 @@ public class WebController implements ErrorController {
     }
 
     @RequestMapping({"businessLogout"})
-    public String logout(Model m, HttpSession session) {
-
-        // session.removeAttribute("business");
-
+    public String logout() {
         return "redirect:/businessLogin";
     }
 
-    // @PreAuthorize("hasRole('BUSINESS')")
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "businessAddProduct", method = RequestMethod.GET)
-    public String addProduct(Model m, HttpSession session) {
+    public String addProduct(Model m) {
 
         String pageToReturn = "addProduct";
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String loggedUser = auth.getName();
-        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
-        if (business_opt.isPresent()){
-            Business business = business_opt.get();
+        Business business = getLoggedUser();
 
-            m.addAttribute("businessName", business.getBusinessName());
-            m.addAttribute("business", business);
+        m.addAttribute("business", business);
+        m.addAttribute("product", new Product());
+        m.addAttribute("product_name_error", false);
 
-            m.addAttribute("product", new Product());
-            m.addAttribute("product_name_error", false);
-
-        }
 
         return pageToReturn;
     }
 
-    // @PreAuthorize("hasRole('BUSINESS')")
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "businessAddProduct", method = RequestMethod.POST)
     public String addProduct(@ModelAttribute Product product,
                              @RequestParam("file") MultipartFile image,
@@ -273,6 +241,24 @@ public class WebController implements ErrorController {
             m.addAttribute("product", product);
             pageToReturn = "addProduct";
         }
+
+        // check alcohol content
+        Boolean alcoholic = product.getStamps().contains("alcoholic");
+        if (alcoholic && product.getAlcoholContent() == null) {
+                m.addAttribute("alcohol_content_error", true);
+                pageToReturn = "addProduct";
+        }
+        else if (product.getAlcoholContent() != null && !alcoholic) {
+            m.addAttribute("alcohol_checkbox_error", true);
+            pageToReturn = "addProduct";
+        }
+        // check name product
+        else if (alreadyExistingProduct != null) {
+            m.addAttribute("product_name_error", true);
+            m.addAttribute("product", product);
+            pageToReturn = "addProduct";
+        }
+
         else {
             Product savedProduct = productRepository.save(product);
             // save orders for "old" business
@@ -297,29 +283,23 @@ public class WebController implements ErrorController {
 
     @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "businessMenu", method = RequestMethod.GET)
-    public String menu(Model m, HttpSession session) {
+    public String menu(Model m) {
 
         String pageToReturn = "menu";
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        Business business = getLoggedUser();
+        m.addAttribute("businessName", business.getBusinessName());
+        m.addAttribute("business", business);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String loggedUser = auth.getName();
-        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
-        if (business_opt.isPresent()){
-            Business business = business_opt.get();
-            m.addAttribute("businessName", business.getBusinessName());
-            m.addAttribute("business", business);
+        List<Product> product_list = business.getProducts();
+        m.addAttribute("products", product_list);
 
-            List<Product> product_list = business.getProducts();
-            m.addAttribute("products", product_list);
-        }
         return pageToReturn;
     }
 
     @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/businessDeleteProduct/{id}")
-    public String deleteProduct(@PathVariable String id, Model m, HttpSession session) {
+    public String deleteProduct(@PathVariable String id, Model m) {
 
         String pageToReturn = "redirect:/businessMenu";
 
@@ -357,10 +337,10 @@ public class WebController implements ErrorController {
         return pageToReturn;
     }
 
-    // @PreAuthorize("hasRole('BUSINESS')")
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/businessModifyProduct", method = RequestMethod.POST)
     public String modifyProduct(@RequestParam(value="modify") String id,
-                                Model m, HttpSession session) {
+                                Model m) {
 
         String pageToReturn = "modProduct";
 
@@ -386,7 +366,7 @@ public class WebController implements ErrorController {
     public String applyChangesProduct(@ModelAttribute(value="product") Product product,
                                       @RequestParam(value="ingredient") ArrayList<String> new_ingredients,
                                       @RequestParam("file") MultipartFile image,
-                                      Model m, HttpSession session) throws IOException {
+                                      Model m) throws IOException {
 
         String pageToReturn = "menu";
 
@@ -438,7 +418,7 @@ public class WebController implements ErrorController {
         return pageToReturn;
     }
 
-    // @PreAuthorize("hasRole('BUSINESS')")
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/businessProfile")
     public String deleteProduct(Model m, HttpSession session) {
 
@@ -452,7 +432,7 @@ public class WebController implements ErrorController {
         return pageToReturn;
     }
 
-    // @PreAuthorize("hasRole('BUSINESS')")
+    @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/businessApplyChanges", method = RequestMethod.POST)
     public String applyChangesBusiness(@ModelAttribute(value="business") Business modifiedBusiness,
                                        @RequestParam("file") MultipartFile image,
@@ -466,7 +446,6 @@ public class WebController implements ErrorController {
                                        Model m) throws IOException {
 
         String pageToReturn = "businessProfile";
-        // also change value stored in session
 
         Business business = getLoggedUser();
 
@@ -492,39 +471,9 @@ public class WebController implements ErrorController {
                 // save business' orders
                 Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
                 modifiedBusiness.setNewOpeningClosingHoures(lun, mar, mer, gio, ven, sab, dom);
-//                modifiedBusiness.setOpeningHoures(new HashMap<>());
-//                modifiedBusiness.initOpeningHoures();
-//                modifiedBusiness.setOpeningHour("0", lun.get(0));
-//                modifiedBusiness.setClosingHour("0", lun.get(1));
-//
-//                modifiedBusiness.setOpeningHour("1", mar.get(0));
-//                modifiedBusiness.setClosingHour("1", mar.get(1));
-//
-//                modifiedBusiness.setOpeningHour("2", mer.get(0));
-//                modifiedBusiness.setClosingHour("2", mer.get(1));
-//
-//                modifiedBusiness.setOpeningHour("3", gio.get(0));
-//                modifiedBusiness.setClosingHour("3", gio.get(1));
-//
-//                modifiedBusiness.setOpeningHour("4", ven.get(0));
-//                modifiedBusiness.setClosingHour("4", ven.get(1));
-//
-//                modifiedBusiness.setOpeningHour("5", sab.get(0));
-//                modifiedBusiness.setClosingHour("5", sab.get(1));
-//
-//                modifiedBusiness.setOpeningHour("6", dom.get(0));
-//                modifiedBusiness.setClosingHour("6", dom.get(1));
-
 
                 // update business on db
                 business.updateRemainingValuesBusiness(modifiedBusiness);
-
-//                business.setBusinessName(modifiedBusiness.getBusinessName());
-//                business.setVATNumber(modifiedVATNumber);
-//                business.setCity(modifiedBusiness.getCity());
-//                business.setCAP(modifiedBusiness.getCAP());
-//                business.setLocation(modifiedBusiness.getLocation());
-//                business.setOpeningHoures(modifiedBusiness.getOpeningHoures());
 
                 if (!(image.getOriginalFilename().contentEquals(""))) {
                     business.setImage(image.getBytes());
@@ -546,17 +495,10 @@ public class WebController implements ErrorController {
     }
 
     @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "/signAsPrepared", method = RequestMethod.POST)
-    public String signAsPrepared(@RequestParam(value="prepared") String id,
-                                 Model m, HttpSession session) throws FirebaseMessagingException {
+    @RequestMapping(value = "/businessSignAsPrepared", method = RequestMethod.POST)
+    public String signAsPrepared(@RequestParam(value="prepared") String id) throws FirebaseMessagingException {
 
-        String pageToReturn = "redirect:/index";
-
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
-
-        Business business = (Business) session.getAttribute("business");
+        String pageToReturn = "redirect:businessDashboard";
 
         Optional<Order> preparedOrder = orderRepository.findById(id);
         if (preparedOrder.isPresent()){
@@ -577,17 +519,12 @@ public class WebController implements ErrorController {
     }
 
     @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "/signAsToPrepare", method = RequestMethod.POST)
-    public String signAsToPrepare(@RequestParam(value="toPrepare") String id,
-                                  Model m, HttpSession session) {
+    @RequestMapping(value = "/businessSignAsToPrepare", method = RequestMethod.POST)
+    public String signAsToPrepare(@RequestParam(value="toPrepare") String id) {
 
-        String pageToReturn = "redirect:/index";
+        String pageToReturn = "redirect:businessDashboard";
 
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
-
-        Business business = (Business) session.getAttribute("business");
+        // Business business = getLoggedUser();
 
         Optional<Order> orderToPrepare = orderRepository.findById(id);
         if (orderToPrepare.isPresent()){
@@ -599,17 +536,11 @@ public class WebController implements ErrorController {
     }
 
     @PreAuthorize("hasRole('BUSINESS')")
-    @RequestMapping(value = "/signAsCollected", method = RequestMethod.POST)
+    @RequestMapping(value = "/businessSignAsCollected", method = RequestMethod.POST)
     public String signAsCollected(@RequestParam(value="toCollect") String id,
                                   Model m, HttpSession session) throws FirebaseMessagingException {
 
-        String pageToReturn = "redirect:/index";
-
-        if (session.getAttribute("business") == null) {
-            pageToReturn = "redirect:/login";
-        }
-
-        Business business = (Business) session.getAttribute("business");
+        String pageToReturn = "redirect:businessDashboard";
 
         Optional<Order> collectedOrder = orderRepository.findById(id);
         if (collectedOrder.isPresent()){
@@ -619,7 +550,6 @@ public class WebController implements ErrorController {
             // notify to the user
             firebaseMessagingService.sendCollectedOrderNotification(collectedOrder.get().getDeviceToken(),
                     collectedOrder.get().getBusiness().getBusinessName());
-
         }
 
         return pageToReturn;
@@ -627,26 +557,19 @@ public class WebController implements ErrorController {
 
     @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping({"businessOrders"})
-    public String orders(Model m, HttpSession session) {
+    public String orders(Model m) {
 
         String pageToReturn = "orders";
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String loggedUser = auth.getName();
-        Optional<Business> business_opt = businessRepository.findByBusinessName(loggedUser);
-
-        if (business_opt.isPresent()){
-            Business business = business_opt.get();
+       Business business = getLoggedUser();
 
             Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
 
             if (orderList.isPresent()){
                 m.addAttribute("orders", orderList.get());
             }
-            m.addAttribute("businessName", business.getBusinessName());
+
             m.addAttribute("business", business);
-        }
 
         return pageToReturn;
     }
@@ -654,6 +577,7 @@ public class WebController implements ErrorController {
 
     @RequestMapping("/pageError")
     public String handleError(HttpServletRequest request) {
+        String pageErrorToReturn = "";
         Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
 
         if (status != null) {
@@ -661,14 +585,18 @@ public class WebController implements ErrorController {
 
             if(statusCode == HttpStatus.NOT_FOUND.value()) {
                 System.out.println("NOT FOUND");
-                return "404";
+                pageErrorToReturn = "404";
             }
             else if(statusCode == HttpStatus.INTERNAL_SERVER_ERROR.value()) {
                 System.out.println("INTERNAL SERVER ERROR");
-                return "500";
+                pageErrorToReturn = "500";
+            }
+            else if(statusCode == HttpStatus.FORBIDDEN.value()) {
+                System.out.println("FORBIDDEN");
+                pageErrorToReturn = "403";
             }
         }
-        return "404";
+        return pageErrorToReturn;
     }
 
 
