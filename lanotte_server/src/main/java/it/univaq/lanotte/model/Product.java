@@ -25,18 +25,24 @@ public class Product {
     private ArrayList<String> ingredients;
     private byte[] image;
     private String category;
-    private ArrayList<String> stamps;
+    private ArrayList<Stamps> stamps;
     private Double price;
     @Field("alcohol_content")
     private Double alcoholContent;
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
+        ArrayList<String> stampsString = new ArrayList<>();
         json.put("id", id);
         json.put("name", name);
         json.put("ingredients", ingredients);
         json.put("category", category);
         json.put("stamps", stamps);
+
+//        for (Stamps stamp : stamps){
+//            stampsString.add(stamp.name());
+//        }
+
         json.put("price", price);
         if (this.getAlcoholContent() != null){
             json.put("alcohol_content", alcoholContent.toString());

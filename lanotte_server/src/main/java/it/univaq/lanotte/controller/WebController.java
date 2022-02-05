@@ -243,7 +243,7 @@ public class WebController implements ErrorController {
         }
 
         // check alcohol content
-        Boolean alcoholic = product.getStamps().contains("alcoholic");
+        Boolean alcoholic = product.getStamps().contains(Stamps.alcoholic);
         if (alcoholic && product.getAlcoholContent() == null) {
                 m.addAttribute("alcohol_content_error", true);
                 pageToReturn = "addProduct";

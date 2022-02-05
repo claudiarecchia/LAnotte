@@ -49,14 +49,7 @@ public class Order {
         json.put("business", business.toJSON());
         json.put("user", user.toJSON());
         json.put("code_to_collect", codeToCollect);
-
-
-        switch (status) {
-            case placed -> json.put("order_status", "inviato");
-            case preparing -> json.put("order_status", "in preparazione");
-            case prepared -> json.put("order_status", "pronto per il ritiro");
-            case collected ->  json.put("order_status", "ritirato");
-        }
+        json.put("order_status", status);
 
         return json;
     }

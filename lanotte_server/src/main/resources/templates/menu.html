@@ -190,17 +190,17 @@
                                                 <td th:text="${#numbers.formatDecimal(p.getPrice(), 0, 2)}"></td>
                                                 <td th:text="${p.getIngredientsNames()}"></td>
                                                 <td>
-                                                    <span th:if="${p.getStamps().contains('vegan')}">Sì</span>
-                                                    <span th:unless="${p.getStamps().contains('vegan')}">No</span>
+                                                    <span th:if="${p.getStamps().contains(T(it.univaq.lanotte.model.Stamps).vegan)}">Sì</span>
+                                                    <span th:unless="${p.getStamps().contains(T(it.univaq.lanotte.model.Stamps).vegan)}">No</span>
                                                 </td>
                                                 <td>
-                                                    <span th:if="${p.getStamps().contains('gluten free')}">Sì</span>
-                                                    <span th:unless="${p.getStamps().contains('gluten free')}">No</span>
+                                                    <span th:if="${p.getStamps().contains(T(it.univaq.lanotte.model.Stamps).gluten_free)}">Sì</span>
+                                                    <span th:unless="${p.getStamps().contains(T(it.univaq.lanotte.model.Stamps).gluten_free)}">No</span>
                                                 </td>
 
                                                 <td>
-                                                    <span th:if="${p.getStamps().contains('alcoholic')}">Sì</span>
-                                                    <span th:unless="${p.getStamps().contains('alcoholic')}">No</span>
+                                                    <span th:if="${p.getStamps().contains(T(it.univaq.lanotte.model.Stamps).alcoholic)}">Sì</span>
+                                                    <span th:unless="${p.getStamps().contains(T(it.univaq.lanotte.model.Stamps).alcoholic)}">No</span>
                                                 </td>
                                                 <div th:if="${p.getAlcoholContent() != null}">
                                                     <td th:text="${p.getAlcoholContent()} + '%VOL'"></td>

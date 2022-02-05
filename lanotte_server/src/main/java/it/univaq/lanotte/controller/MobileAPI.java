@@ -245,8 +245,6 @@ public class MobileAPI {
             Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
             User user = user_opt.get();
 
-            // save user's orders
-            List<Order> user_orders = orderRepository.findByUser(user);
 
             // modify ratings
             JSONObject obj = body.getJSONObject("ratings");
@@ -278,15 +276,19 @@ public class MobileAPI {
                     for (Order o : order_list.get()){
                         if (o.getBusiness().getId().equals(business.getId())){
                             o.updateValuesBusiness(business);
+                            orderRepository.save(o);
                         }
                     }
                 }
             }
 
             // changed rating for an already reviewed business -> change rating
-            if (entriesDiffering.toString() != "{}") {
+            else if (entriesDiffering.toString() != "{}") {
                 Optional<Business> business_opt = businessRepository.findByBusinessName(entriesDiffering.keySet().iterator().next());
                 Business business = business_opt.get();
+
+                // save all orders with the new computed ratings for the business (before modifying)
+                Optional<List<Order>> order_list = orderRepository.findByBusiness(business);
 
                 // compute the difference
                 MapDifference.ValueDifference<Integer> list_difference = entriesDiffering.values().iterator().next();
@@ -294,8 +296,21 @@ public class MobileAPI {
                 business.setRatingSum(business.getRatingSum() + difference);
                 business.setRating((double) (business.getRatingSum() / business.getNumberRatings()));
                 businessRepository.save(business);
+
+                // modify in orders
+                if (order_list.isPresent()){
+                    for (Order o : order_list.get()){
+                        if (o.getBusiness().getId().equals(business.getId())){
+                            o.updateValuesBusiness(business);
+                            orderRepository.save(o);
+                        }
+                    }
+                }
             }
-            
+
+            // all user's orders
+            List<Order> user_orders = orderRepository.findByUser(user);
+
             // update ratings
             user.setRatings(result);
 
