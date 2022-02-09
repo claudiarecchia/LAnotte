@@ -38,18 +38,8 @@ public class Product {
         json.put("ingredients", ingredients);
         json.put("category", category);
         json.put("stamps", stamps);
-
-//        for (Stamps stamp : stamps){
-//            stampsString.add(stamp.name());
-//        }
-
         json.put("price", price);
-        if (this.getAlcoholContent() != null){
-            json.put("alcohol_content", alcoholContent.toString());
-        }
-        else {
-            json.put("alcohol_content", "");
-        }
+        json.put("alcoholContent", alcoholContent);
 
         if(image != null) {
             json.put("image", Base64.getEncoder().encodeToString(image));
@@ -84,6 +74,8 @@ public class Product {
         return returnValue;
     }
 
-    public Product(){}
+    public Product(){
+        this.alcoholContent = 0.0;
+    }
 
 }

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import com.google.firebase.messaging.FirebaseMessagingException;
 import it.univaq.lanotte.model.*;
 import it.univaq.lanotte.repository.BusinessRepository;
 import it.univaq.lanotte.repository.OrderRepository;
@@ -116,7 +115,7 @@ public class MobileAPI {
             order.setCodeToCollect("");
 
             JSONObject user1 = body.getJSONObject("user");
-            Optional<User> user = userRepository.findByAppleId(user1.getString("apple_id"));
+            Optional<User> user = userRepository.findByLoginId(user1.getString("login_id"));
             order.setUser(user.get());
 
             order.setDateTime(body.getString("date_time"));
@@ -131,7 +130,7 @@ public class MobileAPI {
 
     /**
      *
-     * @param requestBody containing the User object (and his "apple_id" as a String)
+     * @param requestBody containing the User object (and his "login_id" as a String)
      * @return all the orders made by the User, in a stringified jsonarray
      */
     @PostMapping("/archive")
@@ -142,7 +141,7 @@ public class MobileAPI {
         try {
             JSONObject body = new JSONObject(requestBody);
 
-            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
+            Optional<User> user_opt = userRepository.findByLoginId(body.getString("login_id"));
             User user = user_opt.get();
             List<Order> orders = orderRepository.findAllByUserOrderByIdDesc(user);
 
@@ -155,7 +154,7 @@ public class MobileAPI {
 
     /**
      *
-     * @param requestBody containing the User object (and his "apple_id" as a String)
+     * @param requestBody containing the User object (and his "login_id" as a String)
      * @return the User object, in a stringified jsonarray
      */
     @PostMapping("/getUser")
@@ -165,11 +164,18 @@ public class MobileAPI {
 
         try {
             JSONObject body = new JSONObject(requestBody);
-            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
+            Optional<User> user_opt = userRepository.findByLoginId(body.getString("login_id"));
 
-            User user = user_opt.get();
-            j_arr.put(user.toJSON());
-
+            if (user_opt.isPresent()){
+                User user = user_opt.get();
+                j_arr.put(user.toJSON());
+            }
+            // new user
+            else {
+                User newUser = new User(body.getString("login_id"));
+                userRepository.save(newUser);
+                j_arr.put(newUser.toJSON());
+            }
         }
         catch (JSONException e) { }
 
@@ -179,7 +185,7 @@ public class MobileAPI {
     /**
      *
      * @param requestBody containing the User object, which contains
-     *                    - his "apple_id" as a String (name: apple_id)
+     *                    - his "login_id" as a String (name: login_id)
      *                    - his favourite_products as a List of Product (name: favourite_products)
      *
      * @return the updated User object, in a stringified jsonarray
@@ -192,7 +198,7 @@ public class MobileAPI {
         try {
             JSONObject body = new JSONObject(requestBody);
 
-            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
+            Optional<User> user_opt = userRepository.findByLoginId(body.getString("login_id"));
             User user = user_opt.get();
 
             // save user's orders
@@ -227,7 +233,7 @@ public class MobileAPI {
     /**
      *
      * @param requestBody containing the User object, which contains
-     *                    - his apple_id as a String (name: apple_id)
+     *                    - his login_id as a String (name: login_id)
      *                    - his ratings as an array of [String, Int] where String is the name of the business
      *                      and Int is the rating of the user for that business. (name: ratings)
      *
@@ -242,7 +248,7 @@ public class MobileAPI {
             JSONObject body = new JSONObject(requestBody);
             // System.out.println("BODY: " + body);
 
-            Optional<User> user_opt = userRepository.findByAppleId(body.getString("apple_id"));
+            Optional<User> user_opt = userRepository.findByLoginId(body.getString("login_id"));
             User user = user_opt.get();
 
 

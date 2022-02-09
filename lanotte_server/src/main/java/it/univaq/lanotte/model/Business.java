@@ -49,7 +49,6 @@ public class Business {
         JSONArray prod_list = new JSONArray();
         json.put("id", id);
         json.put("business_name", businessName);
-        json.put("VAT_number", VATNumber);
         json.put("description", description);
 
         if(image != null) {

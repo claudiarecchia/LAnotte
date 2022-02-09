@@ -25,8 +25,8 @@ public class User {
     @Field("favourite_products")
     private Map<String, ArrayList<Product>> favouriteProducts;
     private Map<String, Integer> ratings;
-    @Field("apple_id")
-    private String appleId;
+    @Field("login_id")
+    private String loginId;
 
     // only for admin
     private String name;
@@ -34,10 +34,10 @@ public class User {
     @Transient
     private Map<String, ArrayList<JSONObject>> favouriteProductsToJSON = new HashMap<>();
 
-    public User(String appleId){
+    public User(String loginId){
         this.favouriteProducts = new HashMap<>();
         this.ratings = new HashMap<>();
-        this.appleId = appleId;
+        this.loginId = loginId;
     }
 
     public JSONObject toJSON() {
@@ -57,7 +57,7 @@ public class User {
         }
         json.put("favourite_products", favouriteProductsToJSON);
         json.put("ratings", ratings);
-        json.put("apple_id", appleId);
+        json.put("login_id", loginId);
         return json;
     }
 
