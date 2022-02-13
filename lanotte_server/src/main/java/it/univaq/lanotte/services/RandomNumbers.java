@@ -6,12 +6,6 @@ import java.util.Random;
 
 public class RandomNumbers {
 
-//    private final RandomNumbers rand;
-//
-//    public RandomNumbers(RandomNumbers rand) {
-//        this.rand = rand;
-//    }
-
     public static String getRandomNumberString() {
         // It will generate 6 digit random Number.
         // from 0 to 999999

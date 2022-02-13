@@ -23,8 +23,6 @@ public class Order {
     private ObjectId id;
     @Field("date_time")
     private String dateTime;
-    @Field("estimated_hour")
-    private String estimatedHour;
     private ArrayList<Product> products;
     private Business business;
     private User user;
@@ -37,6 +35,18 @@ public class Order {
 
     @Transient
     private Map<Product, Integer> productsNameAndQuantity = new HashMap<>();
+
+
+    public Order(Business business, ArrayList<Product> products, String deviceToken,
+                 User user, String dateTime){
+        this.setBusiness(business);
+        this.setProducts(products);
+        this.setStatus(OrderStatus.placed);
+        this.setDeviceToken(deviceToken);
+        this.setCodeToCollect("");
+        this.setUser(user);
+        this.setDateTime(dateTime);
+    }
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -83,9 +93,10 @@ public class Order {
                     }
                 }
                 this.productsNameAndQuantity.put(this.products.get(i), counter);
-                counter = 0;
+                counter = 1;
             }
         }
+
     }
 
     public Double getTotal(){

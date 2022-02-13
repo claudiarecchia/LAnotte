@@ -87,40 +87,31 @@ public class MobileAPI {
      */
     @PostMapping("/placeOrder")
     @ResponseBody
-    public String placeOrder(@RequestBody String requestBody, @RequestHeader("authorization") String token){
+    public String placeOrder(@RequestBody String requestBody, @RequestHeader("authorization") String token) {
         JSONArray j_arr = new JSONArray();
         ArrayList<Product> product_list = new ArrayList<>();
-        Order order = new Order();
-
+        Order order = null;
         System.out.println("TOKEN: " + token);
 
-        try{
+        try {
             JSONObject body = new JSONObject(requestBody);
 
             JSONObject business1 = body.getJSONObject("business");
             Optional<Business> business = businessRepository.findByBusinessName(business1.getString("business_name"));
-            order.setBusiness(business.get());
-
             JSONArray products = body.getJSONArray("products");
             // System.out.println(products);
-            for (int i=0; i< products.length(); i++){
+            for (int i = 0; i < products.length(); i++) {
                 JSONObject product = products.getJSONObject(i);
                 product_list.add(productRepository.findById(product.getString("id")).get());
             }
-            order.setProducts(product_list);
-
-            // set status, token and empty code to collect
-            order.setStatus(OrderStatus.placed);
-            order.setDeviceToken(token);
-            order.setCodeToCollect("");
 
             JSONObject user1 = body.getJSONObject("user");
             Optional<User> user = userRepository.findByLoginId(user1.getString("login_id"));
-            order.setUser(user.get());
 
-            order.setDateTime(body.getString("date_time"));
+            order = new Order(business.get(), product_list, token, user.get(), body.getString("date_time"));
 
-        } catch (JSONException e) { }
+        } catch (JSONException e) {
+        }
 
         Order saved_order = orderRepository.save(order);
         j_arr.put(saved_order.toJSON());

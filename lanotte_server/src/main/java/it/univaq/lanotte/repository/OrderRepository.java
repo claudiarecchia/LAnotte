@@ -14,10 +14,6 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends MongoRepository<Order, String> {
     List<Order> findByUser(User user);
-    Order findFirstByOrderByIdDesc();
-
-    Order findFirstByUserOrderByIdDesc(User user);
     List<Order> findAllByUserOrderByIdDesc(User user);
     Optional<List<Order>> findByBusiness(Business business);
-
 }

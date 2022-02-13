@@ -54,7 +54,7 @@ public class WebController implements ErrorController {
     protected AuthenticationManager authenticationManager;
 
 
-    public Business getLoggedUser(){
+    public Business getLoggedBusinessUser(){
         System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String loggedUser = auth.getName();
@@ -143,7 +143,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "index";
 
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         ArrayList<Order> placedOrders;
         ArrayList<Order> preparingOrders;
@@ -202,13 +202,11 @@ public class WebController implements ErrorController {
     public String addProduct(Model m) {
 
         String pageToReturn = "addProduct";
-
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         m.addAttribute("business", business);
         m.addAttribute("product", new Product());
         m.addAttribute("product_name_error", false);
-
 
         return pageToReturn;
     }
@@ -221,7 +219,7 @@ public class WebController implements ErrorController {
                              Model m) throws Exception {
         String pageToReturn = "menu";
 
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         // selected an image
         if (!(image.getOriginalFilename().contentEquals(""))) {
@@ -287,7 +285,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "menu";
 
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
         m.addAttribute("businessName", business.getBusinessName());
         m.addAttribute("business", business);
 
@@ -303,7 +301,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "redirect:/businessMenu";
 
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         Optional<Product> productToBeRemoved = productRepository.findById(id);
 
@@ -344,7 +342,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "modProduct";
 
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         Optional<Product> productToModify = productRepository.findById(id);
 
@@ -370,7 +368,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "menu";
 
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         // there is another product with the same name in business' menu
         Product alreadyExistingProduct = business.searchProductByName(product);
@@ -423,7 +421,7 @@ public class WebController implements ErrorController {
     public String deleteProduct(Model m, HttpSession session) {
 
         String pageToReturn = "businessProfile";
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         m.addAttribute("business", business);
         m.addAttribute("business_name_error", false);
@@ -447,7 +445,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "businessProfile";
 
-        Business business = getLoggedUser();
+        Business business = getLoggedBusinessUser();
 
         // check error in name (already existing business)
         String modifiedBusinessName = modifiedBusiness.getBusinessName();
@@ -470,7 +468,8 @@ public class WebController implements ErrorController {
 
                 // save business' orders
                 Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
-                modifiedBusiness.setNewOpeningClosingHoures(lun, mar, mer, gio, ven, sab, dom);
+                ArrayList<ArrayList<String>> week = new ArrayList<>(Arrays.asList(lun, mar, mer, gio, ven, sab, dom));
+                modifiedBusiness.setNewOpeningClosingTimes(week);
 
                 // update business on db
                 business.updateRemainingValuesBusiness(modifiedBusiness);
@@ -524,7 +523,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "redirect:businessDashboard";
 
-        // Business business = getLoggedUser();
+        // Business business = getLoggedBusinessUser();
 
         Optional<Order> orderToPrepare = orderRepository.findById(id);
         if (orderToPrepare.isPresent()){
@@ -537,11 +536,9 @@ public class WebController implements ErrorController {
 
     @PreAuthorize("hasRole('BUSINESS')")
     @RequestMapping(value = "/businessSignAsCollected", method = RequestMethod.POST)
-    public String signAsCollected(@RequestParam(value="toCollect") String id,
-                                  Model m, HttpSession session) throws FirebaseMessagingException {
+    public String signAsCollected(@RequestParam(value="toCollect") String id) throws FirebaseMessagingException {
 
         String pageToReturn = "redirect:businessDashboard";
-
         Optional<Order> collectedOrder = orderRepository.findById(id);
         if (collectedOrder.isPresent()){
             collectedOrder.get().setStatus(OrderStatus.collected);
@@ -561,7 +558,7 @@ public class WebController implements ErrorController {
 
         String pageToReturn = "orders";
 
-       Business business = getLoggedUser();
+       Business business = getLoggedBusinessUser();
 
             Optional<List<Order>> orderList = orderRepository.findByBusiness(business);
 

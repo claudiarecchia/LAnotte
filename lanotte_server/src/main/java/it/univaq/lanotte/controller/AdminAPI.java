@@ -19,16 +19,7 @@ import java.util.*;
 public class AdminAPI {
 
     @Autowired
-    ProductRepository productRepository;
-
-    @Autowired
     BusinessRepository businessRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    OrderRepository orderRepository;
 
     @PreAuthorize("hasRole('ADMIN')")
     @RequestMapping({"adminDashboard"})

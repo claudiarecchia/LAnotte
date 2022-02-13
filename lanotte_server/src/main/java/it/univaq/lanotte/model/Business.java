@@ -1,7 +1,6 @@
 package it.univaq.lanotte.model;
 
 import it.univaq.lanotte.Encryption;
-import it.univaq.lanotte.config.SecurityConfiguration;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -11,9 +10,7 @@ import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.io.File;
 import java.util.*;
 
 @Getter
@@ -54,8 +51,6 @@ public class Business {
         if(image != null) {
             json.put("image", Base64.getEncoder().encodeToString(image));
         }
-
-        json.put("location", location);
         json.put("rating", rating);
         for (Product p : products)
             prod_list.put(p.toJSON());
@@ -128,12 +123,12 @@ public class Business {
         return this.openingHoures.get(day).get(1);
     }
 
-    public void setOpeningHour(String day, String hour){
+    public void setOpeningTime(String day, String hour){
         this.openingHoures.get(day).set(0, hour);
 
     }
 
-    public void setClosingHour(String day, String hour){
+    public void setClosingTime(String day, String hour){
         this.openingHoures.get(day).set(1, hour);
     }
 
@@ -148,31 +143,30 @@ public class Business {
         }
     }
 
-    public void setNewOpeningClosingHoures(ArrayList<String> lun, ArrayList<String> mar, ArrayList<String> mer,
-                                           ArrayList<String> gio, ArrayList<String> ven, ArrayList<String> sab,
-                                           ArrayList<String> dom){
+    public void setNewOpeningClosingTimes(ArrayList<ArrayList<String>> week){
         this.setOpeningHoures(new HashMap<>());
         this.initOpeningHoures();
-        this.setOpeningHour("0", lun.get(0));
-        this.setClosingHour("0", lun.get(1));
-
-        this.setOpeningHour("1", mar.get(0));
-        this.setClosingHour("1", mar.get(1));
-
-        this.setOpeningHour("2", mer.get(0));
-        this.setClosingHour("2", mer.get(1));
-
-        this.setOpeningHour("3", gio.get(0));
-        this.setClosingHour("3", gio.get(1));
-
-        this.setOpeningHour("4", ven.get(0));
-        this.setClosingHour("4", ven.get(1));
-
-        this.setOpeningHour("5", sab.get(0));
-        this.setClosingHour("5", sab.get(1));
-
-        this.setOpeningHour("6", dom.get(0));
-        this.setClosingHour("6", dom.get(1));
+        // lun
+        this.setOpeningTime("0", week.get(0).get(0));
+        this.setClosingTime("0", week.get(0).get(1));
+        // mar
+        this.setOpeningTime("1", week.get(1).get(0));
+        this.setClosingTime("1", week.get(1).get(1));
+        // mer
+        this.setOpeningTime("2", week.get(2).get(0));
+        this.setClosingTime("2", week.get(2).get(1));
+        // gio
+        this.setOpeningTime("3", week.get(3).get(0));
+        this.setClosingTime("3", week.get(3).get(1));
+        // ven
+        this.setOpeningTime("4", week.get(4).get(0));
+        this.setClosingTime("4", week.get(4).get(1));
+        // sab
+        this.setOpeningTime("5", week.get(5).get(0));
+        this.setClosingTime("5", week.get(5).get(1));
+        // dom
+        this.setOpeningTime("6", week.get(6).get(0));
+        this.setClosingTime("6", week.get(6).get(1));
     }
 
     public void updateRemainingValuesBusiness(Business modifiedBusiness){

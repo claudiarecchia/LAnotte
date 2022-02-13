@@ -20,7 +20,6 @@ import java.util.*;
 public class User {
     @Id
     private ObjectId id;
-    private String email;
     private String password;
     @Field("favourite_products")
     private Map<String, ArrayList<Product>> favouriteProducts;
@@ -43,8 +42,6 @@ public class User {
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id", id);
-        json.put("email", email);
-        json.put("password", password);
 
         for (String key : favouriteProducts.keySet()){
             favouriteProductsToJSON.put(key, new ArrayList<>());
